@@ -1,0 +1,27 @@
+#!/bin/bash -l
+#SBATCH --job-name=test_mpi
+#SBATCH --account=sk09
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=4
+#SBATCH --partition=debug
+#SBATCH --time=00:05:00
+
+##SBATCH --constraint=gpu
+##SBATCH --gres=gpu:1
+
+#SBATCH --output=../logs/test_mpi.%j.out
+#SBATCH --error=../logs/test_mpi.%j.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=michele.bianco@epfl.ch
+##SBATCH --mem 60G
+
+
+module load daint-gpu
+module load gcc/9.3.0
+module load cudatoolkit/10.2.89_3.28-2.1__g52c0314
+module load TensorFlow/2.4.0-CrayGNU-21.09
+
+source $HOME/miniconda3/etc/profile.d/conda.sh
+conda activate py21cmenv
+mpiexec -n ${SLURM_NTASKS} python test_mpi.py
+conda deactivate
