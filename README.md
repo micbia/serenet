@@ -1,6 +1,6 @@
 # SERENEt
 SERENEt: SEgmentation and REcover NEtwork for SKA-Low multi-frequency tomographic 21-cm data for the Epoch of Reionization (EoR). The fulo SERENEt code that consist of a pre-process step, for foreground mitigation, and two U-shaped neural network for segmentation and 21-cm signal recovery, respectively. A general overview is given in the following figure:<br />
-<img src="https://github.com/micbia/SegU-Net/blob/master/docs/SERENEt_pipeline.png"> <br />
+<img src="https://github.com/micbia/serenet/blob/main/docs/SERENEt_pipeline.png"> <br />
 <ul>
   <li> In the first part, before applying any machine learning method, we process the challenge input data, <i>I_obs</i> , with an algorithm that partially subtracts the foreground contamination. The resulting image, Ires , will still contain some foreground residual and most systematic noise. However, this pre-processing step is essential to reduce the dynamic range in the contaminated image to a reasonable level for neural network training.
   <li> In the second step, we combine the input/output of two independently trained deep neural networks. We refer to this step as the SERENEt pipeline.
@@ -13,7 +13,7 @@ The SERENEt network is composed of two twins networks, Seg-UNet and Rec-UNet. Th
 This segmentation maps are employed for the latter network, as prior information on 
 
 that from produes segmentation maps that identify HI region 
-<img src="https://github.com/micbia/SegU-Net/blob/master/docs/RecUNet_model.png"> 
+<img src="https://github.com/micbia/serenet/blob/master/docs/RecUNet_model.png"> 
 
 
 <b>Seg U-Net Training Utilization:</b></br>
