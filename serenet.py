@@ -45,9 +45,7 @@ ZIPFILE = (0 < len(glob(PATH_TRAIN+'data/*tar.gz')) and 0 < len(glob(PATH_VALID+
 # TODO: if you want to restart from the previous best model set conf.RESUME_EPOCH = conf.BEST_EPOCH and loss need to be cut accordingly
 # -------------------------------------------------------------------
 random.seed(RANDOM_SEED)
-path_scratch = '/scratch/snx3000/mibianco/output_segunet/'
-output_prefix = ''
-PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=path_scratch, prefix=output_prefix)
+PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix='')
 
 if not (os.path.exists(PATH_OUT+'source')):
     # copy code to source directory

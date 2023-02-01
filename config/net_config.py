@@ -38,6 +38,7 @@ class NetworkConfig:
         else:
             self.DATASET_PATH       = trainconfig['DATASET_PATH']
         self.IO_PATH        = trainconfig['IO_PATH']
+        self.SCRATCH_PATH        = trainconfig['SCRATCH_PATH']
         
         try:
             resumeconfig = config['RESUME']
