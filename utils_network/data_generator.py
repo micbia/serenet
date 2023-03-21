@@ -54,6 +54,10 @@ class DataGenerator(Sequence):
         data = data.reshape(temp_mesh, order=order)
         return data
 
+    def _rescaledata(self, arr, a=0, b=1):
+        scaled_arr = (arr - np.min(arr))/(np.max(arr) - np.min(arr)) * (b-a) + a
+        return scaled_arr.astype(np.float32)
+
     # TODO: implement tta with rotation and horzontal/vertical flip
     def _rotate_data(self, data, rotate_angle, rot_axis):
         if(len(self.data_shape) == 3):
@@ -72,7 +76,6 @@ class DataGenerator(Sequence):
         return rotated_data
 
 # -------------------------------------------------------------------
-
 class LightConeGenerator(DataGenerator):
     """
     Michele, 21 Sep 2021:
@@ -88,7 +91,7 @@ class LightConeGenerator(DataGenerator):
         
         #self.random_xHI = random.random()
         #self.random_xHI = round(random.uniform(0.2, 0.3), 4)        # TODO: change this before recompile
-        self.random_z = round(random.uniform(9., 10.), 5)
+        #self.random_z = round(random.uniform(7., 11.), 5)
 
         X = np.zeros((np.append(self.batch_size, self.data_shape)))
         y = np.zeros((np.append(self.batch_size, self.data_shape)))
@@ -121,7 +124,7 @@ class LightConeGenerator(DataGenerator):
             else:
                 # read LC
                 #dT = self._read_cbin(filename='%sdT3_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
-                dT = self._read_cbin(filename='%sdT4pca_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
+                dT = self._read_cbin(filename='%sdT4pca4_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
                 xH = self._read_cbin(filename='%s%s_21cm_i%d.bin' %(self.path+'data/', self.data_type, idx), dimensions=3)
                 
                 # apply manipolation on the LC data
@@ -134,23 +137,26 @@ class LightConeGenerator(DataGenerator):
         return X, y
 
     def _lc_data(self, x, y):
-        if(np.min(self.data_shape) == np.max(self.data_shape)):
+        if(len(self.data_shape) == 2):
             # for U-Net on slices
-            #rseed2 = random.randint(0, x.shape[-1]-1)
+            rseed2 = random.randint(0, x.shape[-1]-1)
             #rseed2 = np.argmin(abs(np.mean(y, axis=(0,1)) - self.random_xHI))
-            rseed2 = np.argmin(abs(self.redshift - self.random_z))
+            #rseed2 = np.argmin(abs(self.redshift - self.random_z))
 
             dT_sampled = x[:, :, rseed2].astype(np.float32)
             xH_sampled = y[:, :, rseed2].astype(np.float32)
-        else:
+        elif(len(self.data_shape) == 3):
             # for 3D U-Net on frequency cube
-            freq_size = np.min(self.data_shape)
-            rseed2 = random.randint(freq_size, x.shape[-1]-1-freq_size) 
-            dT_sampled = np.array([x[:, :, i].astype(np.float32) for i in range(rseed2-freq_size//2, rseed2+freq_size//2)])
-            xH_sampled = np.array([y[:, :, i].astype(np.float32) for i in range(rseed2-freq_size//2, rseed2+freq_size//2)])
+            freq_size = self.data_shape[2]
+            rseed2 = random.randint(freq_size, x.shape[-1]-(freq_size+1)) 
 
-        #dT_sampled = self._RescaleData(arr=dT_sampled, a=1e-3, b=100.)
-        #xH_sampled = self._RescaleData(arr=xH_sampled, a=1e-7, b=1.-1e-7)
+            dT_sampled = x[:, :, rseed2-freq_size//2 : rseed2+freq_size//2]
+            xH_sampled = y[:, :, rseed2-freq_size//2 : rseed2+freq_size//2]
+        else:
+            raise ValueError('wrong dimension for data_shape: %d' %len(self.data_shape))
+        
+        #dT_sampled = self._rescaledata(arr=dT_sampled, a=1e-3, b=100.)
+        #xH_sampled = self._rescaledata(arr=xH_sampled, a=1e-7, b=1.-1e-7)
         return dT_sampled, xH_sampled
 
         
@@ -171,7 +177,7 @@ class LightConeGenerator_SERENEt(DataGenerator):
 
         for i, idx in enumerate(indexes):
             # read LC
-            dT3 = self._read_cbin(filename='%sdT4pca_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
+            dT3 = self._read_cbin(filename='%sdT4pca4_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
             xH = self._read_cbin(filename='%sxH_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
             dT2 = self._read_cbin(filename='%sdT2_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
             
@@ -185,14 +191,23 @@ class LightConeGenerator_SERENEt(DataGenerator):
         return X1, X2, y
 
     def _lc_data(self, x1, x2, y1):
-        rseed2 = random.randint(0, x1.shape[-1]-1)
-        x1_sampled = x1[:, :, rseed2].astype(np.float32)
-        x2_sampled = x1_sampled.copy()
-        x2_sampled[x2[:, :, rseed2] == 0] = x1_sampled.min()
-        y1_sampled = y1[:, :, rseed2].astype(np.float32)
+        if(len(self.data_shape) == 2):
+            rseed2 = random.randint(0, x1.shape[-1]-1)
+            x1_sampled = x1[:, :, rseed2].astype(np.float32)
+            x2_sampled = x2[:, :, rseed2].astype(np.float32)
+            y1_sampled = y1[:, :, rseed2].astype(np.float32)
 
-        #dT_sampled = self._RescaleData(arr=dT_sampled, a=1e-3, b=100.)
-        #xH_sampled = self._RescaleData(arr=xH_sampled, a=1e-7, b=1.-1e-7)
+        elif(len(self.data_shape) == 3):
+            # for 3D U-Net on frequency cube
+            freq_size = self.data_shape[2]
+            rseed2 = random.randint(freq_size, x1.shape[-1]-(freq_size+1)) 
+
+            x1_sampled = x1[:, :, rseed2-freq_size//2 : rseed2+freq_size//2]
+            x2_sampled = x1[:, :, rseed2-freq_size//2 : rseed2+freq_size//2]
+            y1_sampled = y1[:, :, rseed2-freq_size//2 : rseed2+freq_size//2]
+
+        #dT_sampled = self._rescaledata(arr=dT_sampled, a=1e-3, b=100.)
+        #xH_sampled = self._rescaledata(arr=xH_sampled, a=1e-7, b=1.-1e-7)
         return x1_sampled, x2_sampled, y1_sampled
 
 
@@ -233,8 +248,8 @@ class LightConeGenerator_FullSERENEt(DataGenerator):
         y1_sampled = y1[:, :, rseed2].astype(np.float32)
         y2_sampled = y2[:, :, rseed2].astype(np.float32)
 
-        #x_sampled = self._RescaleData(arr=dT_sampled, a=1e-3, b=100.)
-        #y1_sampled = self._RescaleData(arr=xH_sampled, a=1e-7, b=1.-1e-7)
+        #x_sampled = self._rescaledata(arr=dT_sampled, a=1e-3, b=100.)
+        #y1_sampled = self._rescaledata(arr=xH_sampled, a=1e-7, b=1.-1e-7)
         return x_sampled, y1_sampled, y2_sampled
 
 
