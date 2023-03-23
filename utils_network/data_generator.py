@@ -82,9 +82,10 @@ class LightConeGenerator(DataGenerator):
     Data generator of lightcone data meant for SegU-Net or RecU-Net with one input and one output.
     Change the data_type variable for selecting the target.
     """
-    def __init__(self, path='./', data_temp=None, batch_size=None, zipf=False, data_shape=None, data_type='xH', shuffle=False):
+    def __init__(self, path='./', data_temp=None, batch_size=None, zipf=False, data_shape=None, data_type=['dT4pca4', 'xH'], shuffle=False):
         super().__init__(path, data_temp, batch_size, zipf, data_shape, shuffle)
         self.data_type = data_type
+        self.nr_sample = len(glob(self.path+'data/'+self.data_type[0]+'*'))
         
     def __getitem__(self, index):
         indexes = self.indexes[index*self.batch_size:(index+1)*self.batch_size]
@@ -109,11 +110,11 @@ class LightConeGenerator(DataGenerator):
                 tar_df = pd.DataFrame(data=tar_content, index=tar_names)
 
                 # extract file
-                member = tar_df.loc['%sdT3_21cm_i%d.bin' %(self.path_in_zip, idx),0]
+                member = tar_df.loc['%s%s_21cm_i%d.bin' %(self.path_in_zip, self.data_type[0], idx),0]
                 temp_data = mytar.extractfile(member).read()
                 temp_mesh = np.frombuffer(temp_data, count=3, dtype='int32')
                 dT = np.frombuffer(temp_data, count=np.prod(temp_mesh), dtype='float32').reshape(temp_mesh, order='C')
-                member = tar_df.loc['%s%s_21cm_i%d.bin' %(self.path_in_zip, self.data_type, idx),0]
+                member = tar_df.loc['%s%s_21cm_i%d.bin' %(self.path_in_zip, self.data_type[1], idx),0]
                 temp_data = mytar.extractfile(member).read()
                 temp_mesh = np.frombuffer(temp_data, count=3, dtype='int32')
                 xH = np.frombuffer(temp_data, count=np.prod(temp_mesh), dtype='float32').reshape(temp_mesh, order='C')
@@ -123,12 +124,11 @@ class LightConeGenerator(DataGenerator):
                 X[i], y[i] = self._lc_data(x=dT, y=xH)
             else:
                 # read LC
-                #dT = self._read_cbin(filename='%sdT3_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
-                dT = self._read_cbin(filename='%sdT4pca4_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
-                xH = self._read_cbin(filename='%s%s_21cm_i%d.bin' %(self.path+'data/', self.data_type, idx), dimensions=3)
-                
+                dT = self._read_cbin(filename='%s%s_21cm_i%d.bin' %(self.path+'data/', self.data_type[0], idx%self.nr_sample), dimensions=3)
+                xH = self._read_cbin(filename='%s%s_21cm_i%d.bin' %(self.path+'data/', self.data_type[1], idx%self.nr_sample), dimensions=3)
+
                 # apply manipolation on the LC data
-                X[i], y[i] = self._lc_data(x=dT, y=xH)
+                X[i], y[i] = self._lc_data(x=dT, y=xH, rseed2=idx%dT.shape[-1])
 
         # add channel dimension
         X = X[..., np.newaxis]
@@ -136,10 +136,10 @@ class LightConeGenerator(DataGenerator):
 
         return X, y
 
-    def _lc_data(self, x, y):
+    def _lc_data(self, x, y, rseed2):
         if(len(self.data_shape) == 2):
             # for U-Net on slices
-            rseed2 = random.randint(0, x.shape[-1]-1)
+            #rseed2 = random.randint(0, x.shape[-1]-1)
             #rseed2 = np.argmin(abs(np.mean(y, axis=(0,1)) - self.random_xHI))
             #rseed2 = np.argmin(abs(self.redshift - self.random_z))
 

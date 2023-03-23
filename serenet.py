@@ -63,7 +63,7 @@ print ('Number of GPU devices: %d' %NR_GPUS)
 BATCH_SIZE *= NR_GPUS
 
 # Load data
-size_train_dataset, size_valid_dataset = 10000, 1500
+size_train_dataset, size_valid_dataset = 10000*552, 1500*552
 train_idx = np.arange(0, size_train_dataset, dtype=int)
 valid_idx = np.arange(0, size_valid_dataset, dtype=int)
 #train_idx = np.loadtxt(PATH_TRAIN+'good_data.txt')
@@ -120,8 +120,8 @@ elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet'):
     elif(TYPE_NET == 'recunet'):
         DATA_TYPE = 'dT2'
     
-    train_generator = LightConeGenerator(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, zipf=ZIPFILE, batch_size=BATCH_SIZE, data_type=DATA_TYPE, shuffle=True)
-    valid_generator = LightConeGenerator(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, zipf=ZIPFILE, batch_size=BATCH_SIZE, data_type=DATA_TYPE, shuffle=True)
+    train_generator = LightConeGenerator(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, zipf=ZIPFILE, batch_size=BATCH_SIZE, data_type=['dT4pca4', DATA_TYPE], shuffle=True)
+    valid_generator = LightConeGenerator(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, zipf=ZIPFILE, batch_size=BATCH_SIZE, data_type=['dT4pca4', DATA_TYPE], shuffle=True)
 
     # Define generator functional
     def generator_train():
