@@ -39,7 +39,7 @@ if isinstance(conf.DATASET_PATH, list):
     PATH_TRAIN = conf.IO_PATH+'inputs/'+conf.DATASET_PATH[0]
     PATH_VALID = conf.IO_PATH+'inputs/'+conf.DATASET_PATH[1]
 else:
-    PATH_TRAIN = conf.IO_PATH+'inputs/'+conf.dataset_path
+    PATH_TRAIN = conf.IO_PATH+'inputs/'+conf.DATASET_PATH
     PATH_VALID = PATH_TRAIN
 ZIPFILE = (0 < len(glob(PATH_TRAIN+'data/*tar.gz')) and 0 < len(glob(PATH_VALID+'data/*tar.gz')))
 # TODO: if you want to restart from the previous best model set conf.RESUME_EPOCH = conf.BEST_EPOCH and loss need to be cut accordingly

@@ -5,6 +5,7 @@ from tensorflow.keras.layers import Input, Flatten, BatchNormalization, Activati
 from tensorflow.keras.layers import Dense, Conv2D, Conv2DTranspose, Conv3D, Conv3DTranspose, TimeDistributed
 from tensorflow.keras.layers import ConvLSTM2D #, ConvLSTM3D only from tf v2.6.0
 from tensorflow.keras.layers import MaxPooling2D, MaxPooling3D, AveragePooling2D, AveragePooling3D
+from keras.layers import MaxPooling3D, UpSampling3D, Concatenate
 from tensorflow.keras.utils import plot_model
 
 
@@ -451,4 +452,42 @@ def LSTM_Unet(img_shape, params, path='./'):
     model = Model(inputs=[img_input], outputs=[output_image], name='Unet')
 
     #plot_model(model, to_file=path+'LSTMUNet_visualisation.png', show_shapes=True, show_layer_names=True)
+    return model
+
+def Conv3D_model(input_shape, params):
+    def Conv3D_Block(x, filters, kernel_size, activation):
+        x = Conv3D(filters, kernel_size, padding='same', kernel_initializer="he_normal")(x)
+        x = BatchNormalization()(x)
+        x = Activation(activation)(x)
+        return x
+
+    inputs = Input(input_shape)
+
+    # Encoder
+    conv1 = Conv3D_Block(inputs, params['coarse_dim'], params['kernel_size'], params['activation'])
+    pool1 = MaxPooling3D(pool_size=(2, 2, 2))(conv1)
+
+    conv2 = Conv3D_Block(pool1, params['coarse_dim']//2, params['kernel_size'], params['activation'])
+    pool2 = MaxPooling3D(pool_size=(2, 2, 2))(conv2)
+
+    # Middle part
+    conv3 = Conv3D_Block(pool2, params['coarse_dim']//4, params['kernel_size'], params['activation'])
+
+    # Decoder
+    up1 = UpSampling3D(size=(2, 2, 2))(conv3)
+    concat1 = Concatenate(axis=-1)([conv2, up1])
+    conv4 = Conv3D_Block(concat1, params['coarse_dim']//2, params['kernel_size'], params['activation'])
+
+    up2 = UpSampling3D(size=(2, 2, 2))(conv4)
+    concat2 = Concatenate(axis=-1)([conv1, up2])
+    conv5 = Conv3D_Block(concat2, params['coarse_dim'], params['kernel_size'], params['activation'])
+
+    # Output
+    if params['final_activation'] is not None:
+        output = Conv3D(input_shape[-1], kernel_size=1, activation=params['final_activation'])(conv5)
+    else:
+        output = Conv3D(input_shape[-1], kernel_size=1)(conv5)
+
+    model = Model(inputs=[inputs], outputs=[output])
+
     return model
