@@ -14,16 +14,19 @@
 #SBATCH --mail-user=michele.bianco@epfl.ch
 #SBATCH --mem 60G
 
+module purge
 module load daint-gpu
 module load gcc/9.3.0
 module load cudatoolkit/10.2.89_3.28-2.1__g52c0314
 module load TensorFlow/2.4.0-CrayGNU-21.09
 
-CONFIG_PATH="$HOME/codes/serenet/config"
-#CONFIG_PATH="$SCRATCH/output_segunet/outputs/all24-09T23-36-45_128slice"
-
-source $HOME/miniconda3/etc/profile.d/conda.sh
+source /project/c31/codes/miniconda3/etc/profile.d/conda.sh
 conda activate segunet-env
-python serenet.py $CONFIG_PATH/net_SegUnet_lc.ini
+
+#CONFIG_PATH="$HOME/codes/serenet/config"
+CONFIG_PATH="$SCRATCH/output_serenet/26-04T13-05-59_128slice"
+
+#python serenet.py $CONFIG_PATH/net_SegUnet_lc.ini
 #python serenet.py $CONFIG_PATH/net_RecUnet_lc.ini
+python serenet.py $CONFIG_PATH/net_SERENEt_lc.ini
 conda deactivate

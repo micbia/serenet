@@ -301,15 +301,21 @@ def config_paths(conf, path_scratch=None, prefix=''):
     else:
         RESUME_MODEL = './foo'
         if(len(conf.IM_SHAPE) == 3):
-            #PATH_OUT = '%soutputs/%s_%dcube/' %(conf.IO_PATH, datetime.now().strftime('%d-%mT%H-%M-%S'), conf.IM_SHAPE[0])
-            PATH_OUT = '%soutputs/%s_%dcube/' %(path_scratch, prefix + datetime.now().strftime('%d-%mT%H-%M-%S'), conf.IM_SHAPE[0])
+            PATH_OUT = '%s_%dcube/' %(path_scratch + prefix + datetime.now().strftime('%d-%mT%H-%M-%S'), conf.IM_SHAPE[0])
         elif(len(conf.IM_SHAPE) == 2):
-            #PATH_OUT = '%soutputs/%s_%dslice/' %(conf.IO_PATH, datetime.now().strftime('%d-%mT%H-%M-%S'), conf.IM_SHAPE[0])
-            PATH_OUT = '%soutputs/%s_%dslice/' %(path_scratch, prefix + datetime.now().strftime('%d-%mT%H-%M-%S'), conf.IM_SHAPE[0])
+            PATH_OUT = '%s_%dslice/' %(path_scratch + prefix + datetime.now().strftime('%d-%mT%H-%M-%S'), conf.IM_SHAPE[0])
         else:
             print('!!! Wrong data dimension !!!')
         os.makedirs(PATH_OUT)
         os.makedirs(PATH_OUT+'/outputs')
         os.makedirs(PATH_OUT+'/source')
         os.makedirs(PATH_OUT+'/checkpoints')
+
+        # copy code to source directory
+        os.system('cp *.py %s/source' %PATH_OUT)
+        os.system('cp -r utils %s/source' %PATH_OUT)
+        os.system('cp -r utils_network %s/source' %PATH_OUT)
+        os.system('cp -r utils_plot %s/source' %PATH_OUT)
+        os.system('cp -r config %s/source' %PATH_OUT)
+        
     return PATH_OUT, RESUME_MODEL
