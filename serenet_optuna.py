@@ -1,4 +1,5 @@
 import os, random, numpy as np, sys
+from sklearn.metrics import mean_squared_error
 import tensorflow as tf
 from glob import glob
 
@@ -8,7 +9,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import ELU, LeakyReLU, PReLU, ReLU
 
 from config.net_config import NetworkConfig
-from utils_network.networks import Unet, SERENEt, FullSERENEt
+from utils_network.networks import Unet, SERENEt, FullSERENEt, Conv3D_model
 from utils_network.metrics import get_avail_metris
 from utils_network.callbacks import HistoryCheckpoint, SaveModelCheckpoint, ReduceLR
 from utils_network.data_generator import LightConeGenerator, LightConeGenerator_SERENEt, LightConeGenerator_FullSERENEt
@@ -24,6 +25,7 @@ conf = NetworkConfig(config_file)
 # --------------------- NETWORK & RESUME OPTIONS ---------------------
 FREEZE = False
 TYPE_NET = conf.AUGMENT
+RANDOM_SEED = 2022
 RANDOM_SEED = 2022
 BATCH_SIZE = conf.BATCH_SIZE
 METRICS = [get_avail_metris(m) for m in conf.METRICS]
@@ -47,7 +49,13 @@ ZIPFILE = (0 < len(glob(PATH_TRAIN+'data/*tar.gz')) and 0 < len(glob(PATH_VALID+
 random.seed(RANDOM_SEED)
 PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix='')
 
-# copy config file to output path
+if not (os.path.exists(PATH_OUT+'source')):
+    # copy code to source directory
+    os.system('cp *.py %s/source' %PATH_OUT)
+    os.system('cp -r utils %s/source' %PATH_OUT)
+    os.system('cp -r utils_network %s/source' %PATH_OUT)
+    os.system('cp -r utils_plot %s/source' %PATH_OUT)
+    os.system('cp -r config %s/source' %PATH_OUT)
 os.system('cp %s %s' %(config_file, PATH_OUT))
 
 # Define GPU distribution strategy
@@ -57,16 +65,14 @@ print ('Number of GPU devices: %d' %NR_GPUS)
 BATCH_SIZE *= NR_GPUS
 
 # Load data
-#size_train_dataset, size_valid_dataset = 10000*552, 1500*552
-size_train_dataset, size_valid_dataset = 10000, 1500
-
+size_train_dataset, size_valid_dataset = 10000*552, 1500*552
 train_idx = np.arange(0, size_train_dataset, dtype=int)
 valid_idx = np.arange(0, size_valid_dataset, dtype=int)
 #train_idx = np.loadtxt(PATH_TRAIN+'good_data.txt')
 #valid_idx = np.loadtxt(PATH_VALID+'good_data.txt')
 
 # Create data generator from tensorflow.keras.utils.Sequence
-if(TYPE_NET == 'full_serenet'):
+if(TYPE_NET == 'full_serene'):
     train_generator = LightConeGenerator_FullSERENEt(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, shuffle=True)
     valid_generator = LightConeGenerator_FullSERENEt(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, shuffle=True)
 
@@ -76,19 +82,19 @@ if(TYPE_NET == 'full_serenet'):
         multi_enqueuer.start(workers=10, max_queue_size=10)
         while True:
             batch_xs, batch_ys1, batch_ys2 = next(multi_enqueuer.get()) 
-            yield ({'Image': batch_xs}, {'rec_out_img':batch_ys1, 'seg_out_img':batch_ys2})
+            yield (batch_xs, {'out_imgSeg':batch_ys1, 'out_imgRec':batch_ys2})
             
     def generator_valid():
         multi_enqueuer = tf.keras.utils.OrderedEnqueuer(valid_generator, use_multiprocessing=False)
         multi_enqueuer.start(workers=10, max_queue_size=10)
         while True:
             batch_xs, batch_ys1, batch_ys2 = next(multi_enqueuer.get()) 
-            yield ({'Image': batch_xs}, {'rec_out_img':batch_ys1, 'seg_out_img':batch_ys2})
+            yield (batch_xs, {'seg_out_img':batch_ys1, 'out_imgRec':batch_ys2})
 
     # Create dataset from data generator
-    train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=({'Image': tf.float32}, {'rec_out_img': tf.float32, 'seg_out_img': tf.float32}))
-    valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=({'Image': tf.float32}, {'rec_out_img': tf.float32, 'seg_out_img': tf.float32}))
-elif(TYPE_NET == 'serenet'):
+    train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=(tf.float32, {'rec_out_img': tf.float32, 'seg_out_img': tf.float32}))
+    valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=(tf.float32, {'rec_out_img': tf.float32, 'seg_out_img': tf.float32}))
+elif(TYPE_NET == 'serene'):
     train_generator = LightConeGenerator_SERENEt(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, shuffle=True)
     valid_generator = LightConeGenerator_SERENEt(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, shuffle=True)
 
@@ -97,16 +103,16 @@ elif(TYPE_NET == 'serenet'):
         multi_enqueuer = tf.keras.utils.OrderedEnqueuer(train_generator, use_multiprocessing=False)
         multi_enqueuer.start(workers=10, max_queue_size=10)
         while True:
-            batch_xs1, batch_xs2, batch_ys = next(multi_enqueuer.get()) 
-            yield ({'Image1': batch_xs1, 'Image2': batch_xs2}, {'out_img': batch_ys})
+            batch_xs, batch_ys1, batch_ys2 = next(multi_enqueuer.get()) 
+            yield (batch_xs, {'out_imgSeg':batch_ys1, 'out_imgRec':batch_ys2})
             
     def generator_valid():
         multi_enqueuer = tf.keras.utils.OrderedEnqueuer(valid_generator, use_multiprocessing=False)
         multi_enqueuer.start(workers=10, max_queue_size=10)
         while True:
-            batch_xs1, batch_xs2, batch_ys = next(multi_enqueuer.get()) 
-            yield ({'Image1': batch_xs1, 'Image2': batch_xs2}, {'out_img': batch_ys})
-            
+            batch_xs, batch_ys1, batch_ys2 = next(multi_enqueuer.get()) 
+            yield (batch_xs, {'seg_out_img':batch_ys1, 'out_imgRec':batch_ys2})
+
     # Create dataset from data generator
     train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=({'Image1': tf.float32, 'Image2': tf.float32}, {'out_img': tf.float32}))
     valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=({'Image1': tf.float32, 'Image2': tf.float32}, {'out_img': tf.float32}))
@@ -192,11 +198,34 @@ with strategy.scope():
                     'final_activation': None,
                     'depth': 4}
 
+
+    def objective(trial):
+        # Load your dataset here
+        # (X_train, y_train), (X_val, y_val) = ...
+        input_shape = np.append(conf.IM_SHAPE, 1)
+        
+        coarse_dim = trial.suggest_int('coarse_dim', 32, 128, log=True)
+        kernel_size = trial.suggest_int('kernel_size', 3, 5)
+        activation = trial.suggest_categorical('activation', ['relu', 'elu'])
+        final_activation = trial.suggest_categorical('final_activation', ['linear', 'sigmoid'])
+        pool_size = trial.suggest_int('pool_size', 2, 4)
+        pooling_type = trial.suggest_categorical('pooling_type', ['max', 'average'])
+
+        model = Conv3D_model(input_shape, coarse_dim, kernel_size, activation, final_activation, pool_size, pooling_type)
+        
+        optimizer = Adam(learning_rate=trial.suggest_float('learning_rate', 1e-5, 1e-2, log=True))
+        model.compile(optimizer=optimizer, loss=mean_squared_error())
+
+        early_stopping = EarlyStopping(patience=3, restore_best_weights=True)
+
+
+
+
         # for Regression image + astropars
-        if(TYPE_NET == 'full_serenet'):
+        if(TYPE_NET == 'full_serene'):
             model = FullSERENEt(img_shape=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
             model.compile(optimizer=OPTIMIZER, loss=[LOSS, LOSS], loss_weights=LOSS_WEIGHTS, metrics=[METRICS, METRICS])
-        elif(TYPE_NET == 'serenet'):
+        elif(TYPE_NET == 'serene'):
             model = SERENEt(img_shape1=np.append(conf.IM_SHAPE, 1), img_shape2=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
             model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
         elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet'):
