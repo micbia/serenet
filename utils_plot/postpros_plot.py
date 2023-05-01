@@ -18,9 +18,10 @@ os.chdir(path)
 
 config_file = glob('*.ini')[0]
 conf = NetworkConfig(config_file)
-metrics_wanted = conf.METRICS
-metrics_wanted.remove('precision')
-metrics_wanted.remove('balanced_accuracy')
+metrics_wanted = ['r2score']
+#conf.METRICS
+#metrics_wanted.remove('precision')
+#metrics_wanted.remove('balanced_accuracy')
 
 # Load Data
 epoch = conf.RESUME_EPOCH
@@ -67,7 +68,7 @@ for i_nm, (nm, vnm) in enumerate(zip(name_metric, name_val_metric)):
         i_cl += 1
 
 ax2.set_xlim(-1,loss.size)#, ax2.set_ylim(0.6, 0.9)
-ax2.set_ylim(0., 1.0)
+ax2.set_ylim(0.8, 0.95)
 ax4 = ax2.twinx() 
 ax4.semilogy(lr, color='k', alpha=0.4, label='Learning Rate') 
 ax4.set_ylabel('Learning Rate') 

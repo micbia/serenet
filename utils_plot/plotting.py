@@ -1,6 +1,6 @@
 import matplotlib
 matplotlib.use('agg')
-import numpy as np, tools21cm as t2c
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 

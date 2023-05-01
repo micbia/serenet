@@ -1,6 +1,5 @@
 import zipfile, tarfile, math, random, numpy as np, os, sys
 import pandas as pd
-import tools21cm as t2c
 
 from datetime import datetime
 from glob import glob
@@ -178,7 +177,8 @@ class LightConeGenerator_SERENEt(DataGenerator):
         for i, idx in enumerate(indexes):
             # read LC
             dT3 = self._read_cbin(filename='%sdT4pca4_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
-            xH = self._read_cbin(filename='%sxH_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
+            #xH = self._read_cbin(filename='%sxH_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
+            xH = self._read_cbin(filename='%spred_dT4pca4_21cm_i%d.bin' %('/store/ska/sk09/serenet/outputs_segunet/all24-09T23-36-45_128slice/prediction_SERENEt/', idx), dimensions=3)
             dT2 = self._read_cbin(filename='%sdT2_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
             
             # apply manipolation on the LC data

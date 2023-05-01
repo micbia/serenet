@@ -1,1 +1,9 @@
 .venv
+# Folder
+__pycache__/
+utils/__pycache__/__init__.cpython-39.pyc
+
+# Files
+*.pyc
+*.out
+*.err
