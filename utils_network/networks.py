@@ -4,8 +4,8 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Flatten, BatchNormalization, Activation, Dropout, concatenate, Multiply
 from tensorflow.keras.layers import Dense, Conv2D, Conv2DTranspose, Conv3D, Conv3DTranspose, TimeDistributed
 from tensorflow.keras.layers import ConvLSTM2D #, ConvLSTM3D only from tf v2.6.0
-from tensorflow.keras.layers import MaxPooling2D, MaxPooling3D, AveragePooling2D, AveragePooling3D
-from keras.layers import MaxPooling3D, UpSampling3D, Concatenate
+from tensorflow.keras.layers import MaxPooling2D, MaxPooling3D, AveragePooling2D, AveragePooling3D, UpSampling3D, Concatenate
+#from keras.layers import MaxPooling3D, UpSampling3D, Concatenate
 from tensorflow.keras.utils import plot_model
 
 
