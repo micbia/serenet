@@ -12,6 +12,7 @@ class HistoryCheckpoint(Callback):
         self.stor_arr = []
         self.prev_epoch = 0
         self.in_epoch = in_epoch
+        self.FLAG_IMPROVEMENT = False
 
     def on_train_begin(self, logs=None):
         if(self.in_epoch != 0):
@@ -202,11 +203,11 @@ class SaveModelCheckpoint(Callback):
                             self.model.save(filepath, overwrite=True)
                         elif self.fmt_save == 'tf':
                             self.model.save(filepath, overwrite=True, save_format='tf')
-                        FLAG_IMPROVEMENT = True
+                        self.FLAG_IMPROVEMENT = True
                     else:
                         if self.verbose > 0:
                             print('\nEpoch %05d: %s did not improve from %0.5f' %(epoch + 1, self.monitor, self.best))
-                        FLAG_IMPROVEMENT = False
+                        self.FLAG_IMPROVEMENT = False
                     
                     self.model.save(self.path+'checkpoints/last_model.tf', overwrite=True, save_format='tf')
             else:
@@ -224,7 +225,7 @@ class SaveModelCheckpoint(Callback):
             lines = f.readlines()
             new_lines = lines.copy()
             for i, line in enumerate(lines):
-                if('BEST_EPOCH = ' in line and FLAG_IMPROVEMENT):
+                if('BEST_EPOCH = ' in line and self.FLAG_IMPROVEMENT):
                     new_lines[i] = 'BEST_EPOCH = %d\n' %(epoch + 1)
                 if('RESUME_EPOCH = ' in line):
                     new_lines[i] = 'RESUME_EPOCH = %d\n' %(epoch + 1)
