@@ -18,7 +18,7 @@ class HistoryCheckpoint(Callback):
         if(self.in_epoch != 0):
             print('Resuming from Epoch %d...' %self.in_epoch)
             self.prev_epoch = self.in_epoch
-
+            
     def on_epoch_end(self, epoch, logs=None):
         if(epoch == self.in_epoch): self.stor_arr = [[] for i in range(len(logs))]     # initializate array
         
