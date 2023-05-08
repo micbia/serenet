@@ -80,6 +80,7 @@ all_idx = np.arange(0, size_dataset, dtype=int)
 #size_train_dataset, size_valid_dataset = 10000*552, 1500*552
 #size_train_dataset, size_valid_dataset = 10000, 1500
 
+fold_metrics = []
 fold = 0
 for train_idx, valid_idx in kfold.split(all_idx):
 
@@ -227,7 +228,7 @@ for train_idx, valid_idx in kfold.split(all_idx):
     # define callbacks
     callbacks = [EarlyStopping(patience=30, verbose=1),
                 ReduceLR(monitor='val_loss', factor=0.1, patience=10, min_lr=1e-7, verbose=1, wait=int(conf.RESUME_EPOCH-conf.BEST_EPOCH), best=RESUME_LOSS),
-                SaveModelCheckpoint(PATH_OUT+'checkpoints/model-sem21cm_ep{epoch:d}.tf', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, best=RESUME_LOSS),
+                SaveModelCheckpoint(PATH_OUT + f'checkpoints/model-sem21cm_fold{fold}_ep{{epoch:d}}.tf', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, best=RESUME_LOSS),
                 HistoryCheckpoint(filepath=PATH_OUT+'outputs/', verbose=0, save_freq=1, in_epoch=conf.RESUME_EPOCH)]
 
 
@@ -241,9 +242,21 @@ for train_idx, valid_idx in kfold.split(all_idx):
                         validation_data=valid_dist_dataset,
                         validation_steps=size_valid_dataset//BATCH_SIZE,
                         shuffle=True)
+    
+    fold_evaluation = model.evaluate(valid_dist_dataset, steps=size_valid_dataset//BATCH_SIZE, verbose=1)
+    fold_metrics.append(fold_evaluation)
+
 
     # Plot Loss
-    #plot_loss(output=results, path=PATH_OUT+'outputs/')
+    plot_loss(output=results, path=PATH_OUT+'outputs/')
     os.system('python utils_plot/postpros_plot.py %s' %PATH_OUT)
 
     fold += 1
+
+
+fold_metrics = np.array(fold_metrics)
+mean_metrics = fold_metrics.mean(axis=0)
+std_metrics = fold_metrics.std(axis=0)
+
+print("Mean evaluation metrics across folds: ", mean_metrics)
+print("Standard deviation of evaluation metrics across folds: ", std_metrics)
