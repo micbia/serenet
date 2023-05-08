@@ -12,13 +12,12 @@ class HistoryCheckpoint(Callback):
         self.stor_arr = []
         self.prev_epoch = 0
         self.in_epoch = in_epoch
-        self.FLAG_IMPROVEMENT = False
 
     def on_train_begin(self, logs=None):
         if(self.in_epoch != 0):
             print('Resuming from Epoch %d...' %self.in_epoch)
             self.prev_epoch = self.in_epoch
-            
+
     def on_epoch_end(self, epoch, logs=None):
         if(epoch == self.in_epoch): self.stor_arr = [[] for i in range(len(logs))]     # initializate array
         
@@ -142,6 +141,7 @@ class SaveModelCheckpoint(Callback):
         self.epochs_since_last_save = 0
         self.best = best
         self.fmt_save = filepath[-2:]
+        self.FLAG_IMPROVEMENT = False
 
         if mode not in ['auto', 'min', 'max']:
             warnings.warn('SaveModelCheckpoint mode %s is unknown, fallback to auto mode.' % (mode), RuntimeWarning)
