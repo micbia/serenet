@@ -1,6 +1,5 @@
-import numpy as np, matplotlib.pyplot as plt, os, gc
+import numpy as np, matplotlib.pyplot as plt, os, gc, sys
 import matplotlib
-import tools21cm as t2c
 import tensorflow as tf
 
 from tqdm import tqdm
@@ -11,35 +10,22 @@ from sklearn.metrics import matthews_corrcoef, r2_score
 from sklearn.metrics import confusion_matrix
 
 from utils_pred.prediction import SegUnet2Predict, LoadSegUnetModel
-
+from utils.other_utils import read_cbin, save_cbin
 
 title_a = '\t\t _    _ _   _      _   \n\t\t| |  | | \ | |    | |  \n\t\t| |  | |  \| | ___| |_ \n\t\t| |  | | . ` |/ _ \ __|\n\t\t| |__| | |\  |  __/ |_ \n\t\t \____/|_| \_|\___|\__|\n'
 title_b = ' _____              _ _      _         ___  __                \n|  __ \            | (_)    | |       |__ \/_ |               \n| |__) | __ ___  __| |_  ___| |_ ___     ) || | ___ _ __ ___  \n|  ___/ `__/ _ \/ _` | |/ __| __/ __|   / / | |/ __| `_ ` _ \ \n| |   | | |  __/ (_| | | (__| |_\__ \  / /_ | | (__| | | | | |\n|_|   |_|  \___|\__,_|_|\___|\__|___/ |____||_|\___|_| |_| |_|\n'
 print(title_a+'\n'+title_b)
 
 #PLOT_STATS, PLOT_MEAN, PLOT_VISUAL, PLOT_ERROR, PLOT_SCORE = True, True, True, True, True
-PLOT_STATS, PLOT_MEAN, PLOT_VISUAL, PLOT_ERROR, PLOT_SCORE = True, True, True, False, False
+PLOT_STATS, PLOT_MEAN, PLOT_VISUAL, PLOT_ERROR, PLOT_SCORE = False, False, True, False, False
 
-#path_pred = '/store/ska/sk09/segunet/inputs/dataLC_128_pred_310822/'
-#path_pred = '/store/ska/sk09/segunet/inputs/dataLC_128_pred_190922/'
-#path_pred = '/store/ska/sk02/lightcones/EOS16/EOS16_dataset/'
-path_pred = '/store/ska/sk09/segunet/inputs/dataLC_128_train_190922/'
-
-pred_idx = np.arange(6731, 10000)
-#pred_idx = np.arange(1)
-#pred_idx = np.arange(64)
-
-#path_model = '/scratch/snx3000/mibianco/output_segunet/outputs/dT4pca_12-09T16-07-57_128slice/'
-#path_model = '/scratch/snx3000/mibianco/output_segunet/outputs/dT3_12-09T15-23-31_128slice/'
-path_model = '/scratch/snx3000/mibianco/output_segunet/outputs/all24-09T23-36-45_128slice/'
-#path_model = '/scratch/snx3000/mibianco/output_segunet/outputs/BTz24-09T23-36-45_128slice/'
-
+#path_pred = '/store/ska/sk09/serenet/inputs/dataLC_128_pred_190922/'
+path_pred = '/store/ska/sk09/serenet/inputs/dataLC_128_valid_190922/'
+path_model = '/store/ska/sk09/serenet/outputs_segunet/all24-09T23-36-45_128slice/'
+path_out = '/scratch/snx3000/mibianco/output_serenet/prediction_SERENEt_valid/'
 config_file = path_model+'net_Unet_lc.ini'
-#path_out = path_model+'prediction_testEOS/'
-#path_out = path_model+'prediction_EOS_nr4/'
-path_out = path_model+'prediction_SERENEt/'
-#path_out = path_model+'prediction_EOS16_nr7/'
-#path_out = '/store/ska/sk09/mibianco/dataLC_128_pred_190922/images/'
+
+pred_idx = np.arange(0, 1500)
 
 try:
     os.makedirs(path_out)
@@ -71,19 +57,9 @@ for ii in tqdm(range(pred_idx.size)):
     if(os.path.exists('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred))):
         continue
 
-    # Load input and target
-    #wanted_z = 7
-    #redshift = np.array([wanted_z]*300)
-    #x_input = np.load('/store/ska/sk09/mibianco/dataLC_128_pred_190922/data/dT4pca4_z%d.npy' %wanted_z)
-    #x_input = np.moveaxis(x_input, 0, -1)
-    #y_true = np.load('/store/ska/sk09/mibianco/dataLC_128_pred_190922/data/xH_z%d.npy' %wanted_z)
-    #y_true = np.moveaxis(y_true, 0, -1)
-    #xHI = np.load('/store/ska/sk09/mibianco/dataLC_128_pred_190922/data/xHI_z%d.npy' %wanted_z)
-    #xHI = np.moveaxis(xHI, 0, -1)
-
-    x_input = t2c.read_cbin('%sdata/dT4pca%d_21cm_i%d.bin' %(path_pred, nr, i_pred))
-    y_true = t2c.read_cbin('%sdata/xH_21cm_i%d.bin' %(path_pred, i_pred))
-    xHI = t2c.read_cbin('%sdata/xHI_21cm_i%d.bin' %(path_pred, i_pred))
+    x_input = read_cbin('%sdata/dT4pca%d_21cm_i%d.bin' %(path_pred, nr, i_pred))
+    y_true = read_cbin('%sdata/xH_21cm_i%d.bin' %(path_pred, i_pred))
+    xHI = read_cbin('%sdata/xHI_21cm_i%d.bin' %(path_pred, i_pred))
     mean_xHI = np.mean(xHI, axis=(0,1))
 
     # Prediction on dataset
@@ -92,8 +68,8 @@ for ii in tqdm(range(pred_idx.size)):
     if(PLOT_ERROR):
         y_pred = np.round(np.mean(np.clip(y_tta, 0, 1), axis=0))
         y_error = np.std(y_tta, axis=0)
-        t2c.save_cbin('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred), y_pred)
-        t2c.save_cbin('%serror_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred), y_error)
+        save_cbin('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred), y_pred)
+        save_cbin('%serror_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred), y_error)
         #np.save('%sdata/ttaxH_21cm_i%d.npy' %(path_out, i_pred), y_tta)
         y_tta = np.round(np.clip(y_tta, 0, 1))
 
@@ -111,7 +87,7 @@ for ii in tqdm(range(pred_idx.size)):
         mean_error = np.std(np.mean(y_tta, axis=(1,2)), axis=0)
     else:
         y_pred = np.round(np.clip(y_tta.squeeze(), 0, 1))
-        t2c.save_cbin('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred), y_pred)
+        save_cbin('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred), y_pred)
     
     assert x_input.shape == y_pred.shape
     del y_tta, xHI; gc.collect()

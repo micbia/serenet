@@ -1,6 +1,7 @@
 # Folder
 __pycache__/
 utils/__pycache__/__init__.cpython-39.pyc
+utils_pred/__pycache__/prediction.cpython-39.pyc
 
 # Files
 *.pyc
