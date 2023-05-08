@@ -19,6 +19,7 @@ class HistoryCheckpoint(Callback):
             self.prev_epoch = self.in_epoch
 
     def on_epoch_end(self, epoch, logs=None):
+        print(logs)
         if(epoch == self.in_epoch): self.stor_arr = [[] for i in range(len(logs))]     # initializate array
         
         fname = self.filepath+'%s_ep-%d.txt'

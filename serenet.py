@@ -35,6 +35,7 @@ TYPE_NET = conf.AUGMENT
 RANDOM_SEED = 2022
 BATCH_SIZE = conf.BATCH_SIZE
 METRICS = [get_avail_metris(m) for m in conf.METRICS]
+
 if(isinstance(conf.LOSS, list)):
     LOSS = [get_avail_metris(loss) for loss in conf.LOSS]
     LOSS = {"out_imgSeg": LOSS[0], "out_imgRec": LOSS[1]}
@@ -66,7 +67,8 @@ BATCH_SIZE *= NR_GPUS
 
 # Load data
 #size_train_dataset, size_valid_dataset = 10000*552, 1500*552
-size_train_dataset, size_valid_dataset = 10000//100, 1500//100
+size_train_dataset, size_valid_dataset = 10000//10, 1500//10
+
 
 train_idx = np.arange(0, size_train_dataset, dtype=int)
 valid_idx = np.arange(0, size_valid_dataset, dtype=int)
@@ -212,7 +214,7 @@ with strategy.scope():
             model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
 
 # define callbacks
-callbacks = [EarlyStopping(patience=30, verbose=1),
+callbacks = [EarlyStopping(monitor="val_iou",patience=30, verbose=1),
              ReduceLR(monitor='val_loss', factor=0.1, patience=10, min_lr=1e-7, verbose=1, wait=int(conf.RESUME_EPOCH-conf.BEST_EPOCH), best=RESUME_LOSS),
              SaveModelCheckpoint(PATH_OUT+'checkpoints/model-sem21cm_ep{epoch:d}.tf', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, best=RESUME_LOSS),
              HistoryCheckpoint(filepath=PATH_OUT+'outputs/', verbose=0, save_freq=1, in_epoch=conf.RESUME_EPOCH)]
