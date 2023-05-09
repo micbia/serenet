@@ -1,4 +1,0 @@
-tensorflow
-pandas
-tqdm
-matplotlib
