@@ -160,60 +160,25 @@ options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoSha
 train_dataset.with_options(options)
 valid_dataset.with_options(options)
 
-# Define model or load model
-with strategy.scope():
-    if(os.path.exists(RESUME_MODEL)):
-        print('Loaded existing model:\n %s' %RESUME_MODEL)
-        ''' NOTE: load_model() is a compiled model ready to be used (unless the saved model was not compiled).
-            Therefore re-compiling the model will reset the state of the loaded model. '''
-        try:
-            custom_metrics = {m:get_avail_metris(m) for m in np.append(conf.LOSS, conf.METRICS)}
-            model = load_model(RESUME_MODEL, custom_objects=custom_metrics)
-        except:
-            model = load_model(RESUME_MODEL)
+print('\nModel on %d GPU\n' %NR_GPUS)
+RESUME_LOSS = None
+hyperpar = {'coarse_dim': conf.COARSE_DIM,
+            'dropout': conf.DROPOUT,
+            'kernel_size': conf.KERNEL_SIZE,
+            'activation': ACTIVATION,
+            'final_activation': None,
+            'depth': 4}
 
-        if(FREEZE):
-            for l in model.layers:
-                l.trainable = False
-        
-        if(conf.RECOMPILE):
-            #RESUME_LR = np.loadtxt('%soutputs/lr_ep-%d.txt' %(conf.RESUME_PATH, conf.RESUME_EPOCH))[conf.BEST_EPOCH-1]
-            RESUME_LR = conf.LR
-            model.compile(optimizer=Adam(lr=RESUME_LR), loss=LOSS, metrics=METRICS)
-            resume_metrics = model.evaluate(valid_dist_dataset, steps=size_valid_dataset//BATCH_SIZE, verbose=1)
-            RESUME_LOSS = resume_metrics[0]
-            msg = ' Score resumed model:\n'
-            for i, res_val in enumerate(resume_metrics):
-                msg += ' %s = %.3f\n' %(model.metrics_names[i], res_val) 
-            print(msg)
-        else:
-            RESUME_LR = np.loadtxt('%soutputs/lr_ep-%d.txt' %(conf.RESUME_PATH, conf.RESUME_EPOCH))[conf.RESUME_EPOCH-1]
-            #tf.keras.backend.set_value(model.optimizer.lr, RESUME_LR)       # resume learning rate (this works on .h5 saved model but not .tf)
-            RESUME_LOSS = np.loadtxt('%soutputs/val_loss_ep-%d.txt' %(conf.RESUME_PATH, conf.RESUME_EPOCH))[conf.BEST_EPOCH-1]
-            print('\n Loss of resumed model: %.3e\t(%s)' %(RESUME_LOSS, conf.LOSS))
-            model.compile(optimizer=Adam(lr=RESUME_LR), loss=LOSS, metrics=METRICS)
-
-        print(' Resume Learning rate: %.3e' %(tf.keras.backend.get_value(model.optimizer.lr)))
-    else: 
-        print('\nModel on %d GPU\n' %NR_GPUS)
-        RESUME_LOSS = None
-        hyperpar = {'coarse_dim': conf.COARSE_DIM,
-                    'dropout': conf.DROPOUT,
-                    'kernel_size': conf.KERNEL_SIZE,
-                    'activation': ACTIVATION,
-                    'final_activation': None,
-                    'depth': 4}
-
-        # for Regression image + astropars
-        if(TYPE_NET == 'full_serenet'):
-            model = FullSERENEt(img_shape=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
-            model.compile(optimizer=OPTIMIZER, loss=[LOSS, LOSS], loss_weights=LOSS_WEIGHTS, metrics=[METRICS, METRICS])
-        elif(TYPE_NET == 'serenet'):
-            model = SERENEt(img_shape1=np.append(conf.IM_SHAPE, 1), img_shape2=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
-            model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
-        elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet'):
-            model = Unet(img_shape=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
-            model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
+# for Regression image + astropars
+if(TYPE_NET == 'full_serenet'):
+    model = FullSERENEt(img_shape=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
+    model.compile(optimizer=OPTIMIZER, loss=[LOSS, LOSS], loss_weights=LOSS_WEIGHTS, metrics=[METRICS, METRICS])
+elif(TYPE_NET == 'serenet'):
+    model = SERENEt(img_shape1=np.append(conf.IM_SHAPE, 1), img_shape2=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
+    model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
+elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet'):
+    model = Unet(img_shape=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
+    model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
 
 # define callbacks
 callbacks = [EarlyStopping(patience=100, verbose=1),
