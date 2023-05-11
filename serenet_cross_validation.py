@@ -73,7 +73,7 @@ BATCH_SIZE *= NR_GPUS
 k = 5  # number of folds
 kfold = KFold(n_splits=k, shuffle=True, random_state=RANDOM_SEED)
 
-size_dataset = 10000 //1000 #* 552
+size_dataset = 10000 //100 #* 552
 all_idx = np.arange(0, size_dataset, dtype=int)
 
 # Load data

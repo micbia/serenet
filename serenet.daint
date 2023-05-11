@@ -27,6 +27,7 @@ CONFIG_PATH="$HOME/serenet/config"
 #conda activate serenet-env
 source .venv/bin/activate 
 python serenet.py $CONFIG_PATH/net_SegUnet_lc.ini
+python serenet_cross_validation.py $CONFIG_PATH/net_SegUnet_lc.ini
 #conda run -n serenet-env python serenet.py $CONFIG_PATH/net_SegUnet_lc.ini
 #python serenet.py $CONFIG_PATH/net_RecUnet_lc.ini
 deactivate
