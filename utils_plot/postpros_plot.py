@@ -19,7 +19,7 @@ os.chdir(path)
 
 config_file = glob('*.ini')[0]
 conf = NetworkConfig(config_file)
-metrics_wanted = ['r2score']
+metrics_wanted = ['balanced_accuracy',"iou"]
 #conf.METRICS
 #metrics_wanted.remove('precision')
 #metrics_wanted.remove('balanced_accuracy')

@@ -67,7 +67,7 @@ BATCH_SIZE *= NR_GPUS
 
 # Load data
 #size_train_dataset, size_valid_dataset = 10000*552, 1500*552
-size_train_dataset, size_valid_dataset = 10000//10, 1500//10
+size_train_dataset, size_valid_dataset = 10000//50, 1500//15
 
 
 train_idx = np.arange(0, size_train_dataset, dtype=int)
@@ -232,5 +232,5 @@ results = model.fit(x=train_dist_dataset,
                     shuffle=True)
 
 # Plot Loss
-plot_loss(output=results, path=PATH_OUT+'outputs/')
-#os.system('python utils_plot/postpros_plot.py %s' %PATH_OUT)
+#plot_loss(output=results, path=PATH_OUT+'outputs/')
+os.system('python utils_plot/postpros_plot.py %s' %PATH_OUT)
