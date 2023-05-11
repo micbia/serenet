@@ -26,7 +26,6 @@ conf = NetworkConfig(config_file)
 FREEZE = False
 TYPE_NET = conf.AUGMENT
 RANDOM_SEED = 2022
-RANDOM_SEED = 2022
 BATCH_SIZE = conf.BATCH_SIZE
 METRICS = [get_avail_metris(m) for m in conf.METRICS]
 if(isinstance(conf.LOSS, list)):
@@ -211,12 +210,12 @@ with strategy.scope():
         pool_size = trial.suggest_int('pool_size', 2, 4)
         pooling_type = trial.suggest_categorical('pooling_type', ['max', 'average'])
 
-        model = Conv3D_model(input_shape, coarse_dim, kernel_size, activation, final_activation, pool_size, pooling_type)
+        #model = Conv3D_model(input_shape, coarse_dim, kernel_size, activation, final_activation, pool_size, pooling_type)
         
-        optimizer = Adam(learning_rate=trial.suggest_float('learning_rate', 1e-5, 1e-2, log=True))
-        model.compile(optimizer=optimizer, loss=mean_squared_error())
+        #optimizer = Adam(learning_rate=trial.suggest_float('learning_rate', 1e-5, 1e-2, log=True))
+        #model.compile(optimizer=optimizer, loss=mean_squared_error())
 
-        early_stopping = EarlyStopping(patience=3, restore_best_weights=True)
+        #early_stopping = EarlyStopping(patience=3, restore_best_weights=True)
 
 
 
@@ -232,24 +231,24 @@ with strategy.scope():
             model = Unet(img_shape=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
             model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
 
-# define callbacks
-callbacks = [EarlyStopping(patience=30, verbose=1),
-             ReduceLR(monitor='val_loss', factor=0.1, patience=10, min_lr=1e-7, verbose=1, wait=int(conf.RESUME_EPOCH-conf.BEST_EPOCH), best=RESUME_LOSS),
-             SaveModelCheckpoint(PATH_OUT+'checkpoints/model-sem21cm_ep{epoch:d}.tf', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, best=RESUME_LOSS),
-             HistoryCheckpoint(filepath=PATH_OUT+'outputs/', verbose=0, save_freq=1, in_epoch=conf.RESUME_EPOCH)]
+    # define callbacks
+    callbacks = [EarlyStopping(patience=30, verbose=1),
+                ReduceLR(monitor='val_loss', factor=0.1, patience=10, min_lr=1e-7, verbose=1, wait=int(conf.RESUME_EPOCH-conf.BEST_EPOCH), best=RESUME_LOSS),
+                SaveModelCheckpoint(PATH_OUT+'checkpoints/model-sem21cm_ep{epoch:d}.tf', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, best=RESUME_LOSS),
+                HistoryCheckpoint(filepath=PATH_OUT+'outputs/', verbose=0, save_freq=1, in_epoch=conf.RESUME_EPOCH)]
 
 
-# model fit
-results = model.fit(x=train_dist_dataset,
-                    batch_size=BATCH_SIZE, 
-                    epochs=conf.EPOCHS,
-                    steps_per_epoch=size_train_dataset//BATCH_SIZE,
-                    initial_epoch=conf.RESUME_EPOCH,
-                    callbacks=callbacks, 
-                    validation_data=valid_dist_dataset,
-                    validation_steps=size_valid_dataset//BATCH_SIZE,
-                    shuffle=True)
+    # model fit
+    results = model.fit(x=train_dist_dataset,
+                        batch_size=BATCH_SIZE, 
+                        epochs=conf.EPOCHS,
+                        steps_per_epoch=size_train_dataset//BATCH_SIZE,
+                        initial_epoch=conf.RESUME_EPOCH,
+                        callbacks=callbacks, 
+                        validation_data=valid_dist_dataset,
+                        validation_steps=size_valid_dataset//BATCH_SIZE,
+                        shuffle=True)
 
-# Plot Loss
-#plot_loss(output=results, path=PATH_OUT+'outputs/')
-os.system('python utils_plot/postpros_plot.py %s' %PATH_OUT)
+    # Plot Loss
+    #plot_loss(output=results, path=PATH_OUT+'outputs/')
+    os.system('python utils_plot/postpros_plot.py %s' %PATH_OUT)
