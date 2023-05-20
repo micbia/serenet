@@ -3,4 +3,4 @@ pandas
 tqdm
 matplotlib
 scikit-learn
-optuna
+optuna==2.0.0
