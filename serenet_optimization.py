@@ -208,14 +208,17 @@ def objective(trial):
                         validation_data=valid_dist_dataset,
                         validation_steps=size_valid_dataset//BATCH_SIZE,
                         shuffle=True)
+    
+    
+    return np.min(results.history['val_loss'])
 
     # Plot Loss
     #plot_loss(output=results, path=PATH_OUT+'outputs/')
     #os.system('python utils_plot/postpros_plot.py %s' %PATH_OUT)
 
 
-study = optuna.create_study()
-study.optimize(objective, n_trials=2)
+study = optuna.create_study(direction='minimize')
+study.optimize(objective, n_trials=3)
 
-print("finished")
+print("************* finished *****************")
 print(study.best_params)

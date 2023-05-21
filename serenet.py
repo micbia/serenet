@@ -231,6 +231,9 @@ results = model.fit(x=train_dist_dataset,
                     validation_steps=size_valid_dataset//BATCH_SIZE,
                     shuffle=True)
 
+# print the lowest validation loss
+print(' Lowest validation loss: %.3e' %np.min(results.history['val_loss']))
+
 # Plot Loss
 #plot_loss(output=results, path=PATH_OUT+'outputs/')
-os.system('python utils_plot/postpros_plot.py %s' %PATH_OUT)
+#os.system('python utils_plot/postpros_plot.py %s' %PATH_OUT)
