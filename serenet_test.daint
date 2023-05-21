@@ -1,0 +1,27 @@
+#!/bin/bash -l
+#SBATCH --job-name=serenet_test
+#SBATCH --account=sk09
+#SBATCH --nodes=1
+##SBATCH --ntasks-per-node=1
+#SBATCH --constraint=gpu
+#SBATCH --gres=gpu:1
+
+#SBATCH --time=24:00:00
+
+#SBATCH --output=logs/serenet.%j.out
+#SBATCH --error=logs/serenet.%j.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=massimo.desantis@he-arc.ch
+#SBATCH --mem 60G
+
+module purge
+module load daint-gpu
+module load gcc/9.3.0
+module load cudatoolkit/10.2.89_3.28-2.1__g52c0314
+module load TensorFlow/2.4.0-CrayGNU-21.09
+
+#source .venv/bin/activate
+
+python hello.py
+
+#deactivate
