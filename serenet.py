@@ -67,7 +67,7 @@ BATCH_SIZE *= NR_GPUS
 
 # Load data
 #size_train_dataset, size_valid_dataset = 10000*552, 1500*552
-size_train_dataset, size_valid_dataset = 10000*1, 1500*1
+size_train_dataset, size_valid_dataset = 10000//50, 1500//15
 
 
 train_idx = np.arange(0, size_train_dataset, dtype=int)

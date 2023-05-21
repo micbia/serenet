@@ -3,4 +3,3 @@ pandas
 tqdm
 matplotlib
 scikit-learn
-optuna
