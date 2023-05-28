@@ -12,7 +12,7 @@ from utils_network.networks import Unet, SERENEt, FullSERENEt
 from utils_network.metrics import get_avail_metris
 from utils_network.callbacks import HistoryCheckpoint, SaveModelCheckpoint, ReduceLR
 from utils_network.data_generator import LightConeGenerator, LightConeGenerator_SERENEt, LightConeGenerator_FullSERENEt
-from utils.other_utils import get_data, get_data_lc, config_paths
+from utils.other_utils import get_data, get_data_lc, config_paths, config_path_opti
 from utils_plot.plotting import plot_loss
 
 import optuna
@@ -31,53 +31,65 @@ print("""
 config_file = sys.argv[1]
 conf = NetworkConfig(config_file)
 
-# --------------------- NETWORK & RESUME OPTIONS ---------------------
-FREEZE = False
-TYPE_NET = conf.AUGMENT
-RANDOM_SEED = 2022
-BATCH_SIZE = conf.BATCH_SIZE
-METRICS = [get_avail_metris(m) for m in conf.METRICS]
-
-if(isinstance(conf.LOSS, list)):
-    LOSS = [get_avail_metris(loss) for loss in conf.LOSS]
-    LOSS = {"out_imgSeg": LOSS[0], "out_imgRec": LOSS[1]}
-    LOSS_WEIGHTS = {"out_imgSeg": 0.5, "out_imgRec": 0.5}
-else:
-    LOSS = get_avail_metris(conf.LOSS)
-OPTIMIZER = Adam(lr=conf.LR)
-ACTIVATION = 'relu'
-if isinstance(conf.DATASET_PATH, list):
-    PATH_TRAIN = conf.IO_PATH+'inputs/'+conf.DATASET_PATH[0]
-    PATH_VALID = conf.IO_PATH+'inputs/'+conf.DATASET_PATH[1]
-else:
-    PATH_TRAIN = conf.IO_PATH+'inputs/'+conf.DATASET_PATH
-    PATH_VALID = PATH_TRAIN
-ZIPFILE = (0 < len(glob(PATH_TRAIN+'data/*tar.gz')) and 0 < len(glob(PATH_VALID+'data/*tar.gz')))
-# TODO: if you want to restart from the previous best model set conf.RESUME_EPOCH = conf.BEST_EPOCH and loss need to be cut accordingly
-# -------------------------------------------------------------------
-random.seed(RANDOM_SEED)
-PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix='')
-
+# create output file structure
+PATH_OUT = config_path_opti(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix='')
 # copy config file to output path
 os.system('cp %s %s' %(config_file, PATH_OUT))
 
-# Define GPU distribution strategy
-strategy = tf.distribute.MirroredStrategy()
-NR_GPUS = strategy.num_replicas_in_sync
-print ('Number of GPU devices: %d' %NR_GPUS)
-BATCH_SIZE *= NR_GPUS
-
-# Load data
-#size_train_dataset, size_valid_dataset = 10000*552, 1500*552
-size_train_dataset, size_valid_dataset = 10000//50, 1500//15
-
-
-train_idx = np.arange(0, size_train_dataset, dtype=int)
-valid_idx = np.arange(0, size_valid_dataset, dtype=int)
-#train_idx = np.loadtxt(PATH_TRAIN+'good_data.txt')
-#valid_idx = np.loadtxt(PATH_VALID+'good_data.txt')
-
 def objective(trial):
+
+    # Hyperparemeters
+    coarse_dim = trial.suggest_int('coarse_dim', 128, 512,log=True)
+    dropout = trial.suggest_float('dropout', 0.0, 0.5,step=0.02)
+    kernel_size = trial.suggest_int('kernel_size', 3, 11)
+    activation = trial.suggest_categorical('activation', ['relu', 'elu'])
+    final_activation = trial.suggest_categorical('final_activation', ['linear', 'sigmoid',None])
+    depth = trial.suggest_int('depth', 2, 6)
+    pooling_type = trial.suggest_categorical('pooling_type', ['max', 'average'])
+
+    learning_rate = trial.suggest_float('learning_rate', 1e-5, 1e-1, log=True)
+    batch_size = trial.suggest_int('batch_size', 8, 64, log=True)
+
+    wandbConfig = dict(trial.params)
+    wandbConfig["trialNumber"] = trial.number
+
+    # --------------------- NETWORK & RESUME OPTIONS ---------------------
+    TYPE_NET = conf.AUGMENT
+    RANDOM_SEED = 2022
+    BATCH_SIZE = batch_size
+    METRICS = [get_avail_metris(m) for m in conf.METRICS]
+
+    if(isinstance(conf.LOSS, list)):
+        LOSS = [get_avail_metris(loss) for loss in conf.LOSS]
+        LOSS = {"out_imgSeg": LOSS[0], "out_imgRec": LOSS[1]}
+        LOSS_WEIGHTS = {"out_imgSeg": 0.5, "out_imgRec": 0.5}
+    else:
+        LOSS = get_avail_metris(conf.LOSS)
+    OPTIMIZER = Adam(lr=learning_rate)
+    if isinstance(conf.DATASET_PATH, list):
+        PATH_TRAIN = conf.IO_PATH+'inputs/'+conf.DATASET_PATH[0]
+        PATH_VALID = conf.IO_PATH+'inputs/'+conf.DATASET_PATH[1]
+    else:
+        PATH_TRAIN = conf.IO_PATH+'inputs/'+conf.DATASET_PATH
+        PATH_VALID = PATH_TRAIN
+    ZIPFILE = (0 < len(glob(PATH_TRAIN+'data/*tar.gz')) and 0 < len(glob(PATH_VALID+'data/*tar.gz')))
+    # TODO: if you want to restart from the previous best model set conf.RESUME_EPOCH = conf.BEST_EPOCH and loss need to be cut accordingly
+    # -------------------------------------------------------------------
+    random.seed(RANDOM_SEED)
+
+    # Define GPU distribution strategy
+    strategy = tf.distribute.MirroredStrategy()
+    NR_GPUS = strategy.num_replicas_in_sync
+    print ('Number of GPU devices: %d' %NR_GPUS)
+    BATCH_SIZE *= NR_GPUS
+
+    # Load data
+    #size_train_dataset, size_valid_dataset = 10000*552, 1500*552
+    size_train_dataset, size_valid_dataset = 10000//50, 1500//15
+
+
+    train_idx = np.arange(0, size_train_dataset, dtype=int)
+    valid_idx = np.arange(0, size_valid_dataset, dtype=int)
 
     # Create data generator from tensorflow.keras.utils.Sequence
     if(TYPE_NET == 'full_serenet'):
@@ -162,23 +174,14 @@ def objective(trial):
     train_dataset.with_options(options)
     valid_dataset.with_options(options)
 
-    # Hyperparemeters
-    
-    coarse_dim = trial.suggest_int('coarse_dim', 32, 128, log=True)
-    kernel_size = trial.suggest_int('kernel_size', 3, 5)
-    activation = trial.suggest_categorical('activation', ['relu', 'elu'])
-    final_activation = trial.suggest_categorical('final_activation', ['linear', 'sigmoid'])
-    pool_size = trial.suggest_int('pool_size', 2, 4)
-    pooling_type = trial.suggest_categorical('pooling_type', ['max', 'average'])
-
     print('\nModel on %d GPU\n' %NR_GPUS)
-    RESUME_LOSS = None
-    hyperpar = {'coarse_dim': conf.COARSE_DIM,
-                'dropout': conf.DROPOUT,
-                'kernel_size': conf.KERNEL_SIZE,
-                'activation': ACTIVATION,
-                'final_activation': None,
-                'depth': 4}
+    hyperpar = {'coarse_dim': coarse_dim,
+                'dropout': dropout,
+                'kernel_size': kernel_size,
+                'activation': activation,
+                'final_activation': final_activation,
+                'depth': depth,
+                'pooling_type': pooling_type}
 
     # for Regression image + astropars
     if(TYPE_NET == 'full_serenet'):
@@ -193,7 +196,7 @@ def objective(trial):
 
     # define callbacks
     callbacks = [EarlyStopping(patience=100, verbose=1),
-                ReduceLR(monitor='val_loss', factor=0.1, patience=10, min_lr=1e-7, verbose=1, wait=int(conf.RESUME_EPOCH-conf.BEST_EPOCH), best=RESUME_LOSS)]#,
+                ReduceLR(monitor='val_loss', factor=0.1, patience=10, min_lr=1e-7, verbose=1)]#,
                 #SaveModelCheckpoint(PATH_OUT+'checkpoints/model-sem21cm_ep{epoch:d}.tf', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, best=RESUME_LOSS),
                 #HistoryCheckpoint(filepath=PATH_OUT+'outputs/', verbose=0, save_freq=1, in_epoch=conf.RESUME_EPOCH)]
 
@@ -208,17 +211,20 @@ def objective(trial):
                         validation_data=valid_dist_dataset,
                         validation_steps=size_valid_dataset//BATCH_SIZE,
                         shuffle=True)
-    
-    
-    return np.min(results.history['val_loss'])
 
-    # Plot Loss
-    #plot_loss(output=results, path=PATH_OUT+'outputs/')
-    #os.system('python utils_plot/postpros_plot.py %s' %PATH_OUT)
+
+    wandbConfig["best_val_loss"] = np.min(results.history['val_loss'])
+
+    # save optimization parameters and results for later use in wandb
+    with open(PATH_OUT+'outputs/optimization.txt', 'a') as f:
+        f.write(str(wandbConfig)+"\n")
+    
+    
+    return wandbConfig["best_val_loss"]
 
 
 study = optuna.create_study(direction='minimize')
-study.optimize(objective, n_trials=3)
+study.optimize(objective, n_trials=2)
 
 print("************* finished *****************")
 print(study.best_params)
