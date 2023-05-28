@@ -1,10 +1,14 @@
 {
     "AUGMENT" : "segunet",
     "IMG_SHAPE" : [128, 128],
-    "EPOCHS" : 2,
+    "EPOCHS" : 1,
     "LOSS" : "balanced_cross_entropy",
-    "METRICS" : ["iou", "matthews_coef", "balanced_accuracy", "FalseNegativeRate", "FalsePositiveRate", "precision"],
+    "METRICS" : ["iou", "matthews_coef", "balanced_accuracy", "FalseNegativeRate"],
     "IO_PATH" : "/store/ska/sk09/serenet/",
     "SCRATCH_PATH" : "/scratch/snx3000/mdesanti/output_serenet/",
-    "DATASET_PATH" : ["dataLC_128_train_190922/", "dataLC_128_valid_190922/"]
+    "DATASET_PATH" : ["dataLC_128_train_190922/", "dataLC_128_valid_190922/"],
+    "OPTIMIZATION": {
+        "METRIC" : "iou",
+        "DIRECTION" : "maximize"
+    }
 }

@@ -187,8 +187,9 @@ def objective(trial):
         model = Unet(img_shape=np.append(config["IMG_SHAPE"], 1), params=hyperpar, path=PATH_OUT)
         model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
 
+
     # define callbacks
-    callbacks = [EarlyStopping(patience=100, verbose=1),
+    callbacks = [EarlyStopping(patience=100, verbose=1, restore_best_weights=True, monitor='val_iou'),
                 ReduceLR(monitor='val_loss', factor=0.1, patience=10, min_lr=1e-7, verbose=1)]#,
                 #SaveModelCheckpoint(PATH_OUT+'checkpoints/model-sem21cm_ep{epoch:d}.tf', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, best=RESUME_LOSS),
                 #HistoryCheckpoint(filepath=PATH_OUT+'outputs/', verbose=0, save_freq=1, in_epoch=conf.RESUME_EPOCH)]
@@ -205,18 +206,21 @@ def objective(trial):
                         shuffle=True)
 
 
-    wandbConfig["best_val_loss"] = np.min(results.history['val_loss'])
+    wandbConfig["val_loss"] = results.history['val_loss'][-1]
+    wandbConfig["iou"] = results.history['val_iou'][-1]
+    wandbConfig["matthews_coef"] = results.history['val_matthews_coef'][-1]
+
 
     # save optimization parameters and results for later use in wandb
     with open(PATH_OUT+'outputs/optimization.txt', 'a') as f:
         f.write(str(wandbConfig)+"\n")
     
     
-    return wandbConfig["best_val_loss"]
+    return wandbConfig[config["OPTIMIZATION"]["METRIC"]]
 
 
-study = optuna.create_study(direction='minimize')
-study.optimize(objective, n_trials=2)
+study = optuna.create_study(direction=config["OPTIMIZATION"]["DIRECTION"])
+study.optimize(objective, n_trials=10)
 
 print("************* finished *****************")
 print(study.best_params)
