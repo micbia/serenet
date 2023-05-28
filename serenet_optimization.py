@@ -16,23 +16,16 @@ from utils.other_utils import get_data, get_data_lc, config_paths, config_path_o
 from utils_plot.plotting import plot_loss
 
 import optuna
+import json
 
-# title
-print("""
-  _____              _    _ _   _      _   
- / ____|            | |  | | \ | |    | |  
-| (___   ___  __ _  | |  | |  \| | ___| |_ 
- \___ \ / _ \/ _` | | |  | | . ` |/ _ \ __|
- ____) |  __/ (_| | | |__| | |\  |  __/ |_ 
-|_____/ \___|\__, |  \____/|_| \_|\___|\__|
-              __/ |                        
-             |___/                         
-""")
+
 config_file = sys.argv[1]
-conf = NetworkConfig(config_file)
+# read json
+with open(config_file) as f:
+    config = json.load(f)
 
 # create output file structure
-PATH_OUT = config_path_opti(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix='')
+PATH_OUT = config_path_opti(conf=config, path_scratch=config["SCRATCH_PATH"], prefix='')
 # copy config file to output path
 os.system('cp %s %s' %(config_file, PATH_OUT))
 
@@ -42,7 +35,7 @@ def objective(trial):
     coarse_dim = trial.suggest_int('coarse_dim', 128, 512,log=True)
     dropout = trial.suggest_float('dropout', 0.0, 0.5,step=0.02)
     kernel_size = trial.suggest_int('kernel_size', 3, 11)
-    activation = trial.suggest_categorical('activation', ['relu', 'elu'])
+    activation = trial.suggest_categorical('activation', ['relu', 'elu', 'leakyrelu', 'prelu'])
     final_activation = trial.suggest_categorical('final_activation', ['linear', 'sigmoid',None])
     depth = trial.suggest_int('depth', 2, 6)
     pooling_type = trial.suggest_categorical('pooling_type', ['max', 'average'])
@@ -54,23 +47,23 @@ def objective(trial):
     wandbConfig["trialNumber"] = trial.number
 
     # --------------------- NETWORK & RESUME OPTIONS ---------------------
-    TYPE_NET = conf.AUGMENT
+    TYPE_NET = config["AUGMENT"]
     RANDOM_SEED = 2022
     BATCH_SIZE = batch_size
-    METRICS = [get_avail_metris(m) for m in conf.METRICS]
+    METRICS = [get_avail_metris(m) for m in config["METRICS"]]
 
-    if(isinstance(conf.LOSS, list)):
-        LOSS = [get_avail_metris(loss) for loss in conf.LOSS]
+    if(isinstance(config["LOSS"], list)):
+        LOSS = [get_avail_metris(loss) for loss in config["LOSS"]]
         LOSS = {"out_imgSeg": LOSS[0], "out_imgRec": LOSS[1]}
         LOSS_WEIGHTS = {"out_imgSeg": 0.5, "out_imgRec": 0.5}
     else:
-        LOSS = get_avail_metris(conf.LOSS)
+        LOSS = get_avail_metris(config["LOSS"])
     OPTIMIZER = Adam(lr=learning_rate)
-    if isinstance(conf.DATASET_PATH, list):
-        PATH_TRAIN = conf.IO_PATH+'inputs/'+conf.DATASET_PATH[0]
-        PATH_VALID = conf.IO_PATH+'inputs/'+conf.DATASET_PATH[1]
+    if isinstance(config["DATASET_PATH"], list):
+        PATH_TRAIN = config["IO_PATH"]+'inputs/'+config["DATASET_PATH"][0]
+        PATH_VALID = config["IO_PATH"]+'inputs/'+config["DATASET_PATH"][1]
     else:
-        PATH_TRAIN = conf.IO_PATH+'inputs/'+conf.DATASET_PATH
+        PATH_TRAIN = config["IO_PATH"]+'inputs/'+config["DATASET_PATH"]
         PATH_VALID = PATH_TRAIN
     ZIPFILE = (0 < len(glob(PATH_TRAIN+'data/*tar.gz')) and 0 < len(glob(PATH_VALID+'data/*tar.gz')))
     # TODO: if you want to restart from the previous best model set conf.RESUME_EPOCH = conf.BEST_EPOCH and loss need to be cut accordingly
@@ -93,8 +86,8 @@ def objective(trial):
 
     # Create data generator from tensorflow.keras.utils.Sequence
     if(TYPE_NET == 'full_serenet'):
-        train_generator = LightConeGenerator_FullSERENEt(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, shuffle=True)
-        valid_generator = LightConeGenerator_FullSERENEt(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, shuffle=True)
+        train_generator = LightConeGenerator_FullSERENEt(path=PATH_TRAIN, data_temp=train_idx, data_shape=config["IMG_SHAPE"], batch_size=BATCH_SIZE, shuffle=True)
+        valid_generator = LightConeGenerator_FullSERENEt(path=PATH_VALID, data_temp=valid_idx, data_shape=config["IMG_SHAPE"], batch_size=BATCH_SIZE, shuffle=True)
 
         # Define generator functional
         def generator_train():
@@ -115,8 +108,8 @@ def objective(trial):
         train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=({'Image': tf.float32}, {'rec_out_img': tf.float32, 'seg_out_img': tf.float32}))
         valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=({'Image': tf.float32}, {'rec_out_img': tf.float32, 'seg_out_img': tf.float32}))
     elif(TYPE_NET == 'serenet'):
-        train_generator = LightConeGenerator_SERENEt(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, shuffle=True)
-        valid_generator = LightConeGenerator_SERENEt(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, shuffle=True)
+        train_generator = LightConeGenerator_SERENEt(path=PATH_TRAIN, data_temp=train_idx, data_shape=config["IMG_SHAPE"], batch_size=BATCH_SIZE, shuffle=True)
+        valid_generator = LightConeGenerator_SERENEt(path=PATH_VALID, data_temp=valid_idx, data_shape=config["IMG_SHAPE"], batch_size=BATCH_SIZE, shuffle=True)
 
         # Define generator functional
         def generator_train():
@@ -142,8 +135,8 @@ def objective(trial):
         elif(TYPE_NET == 'recunet'):
             DATA_TYPE = 'dT2'
         
-        train_generator = LightConeGenerator(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, zipf=ZIPFILE, batch_size=BATCH_SIZE, data_type=['dT4pca4', DATA_TYPE], shuffle=True)
-        valid_generator = LightConeGenerator(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, zipf=ZIPFILE, batch_size=BATCH_SIZE, data_type=['dT4pca4', DATA_TYPE], shuffle=True)
+        train_generator = LightConeGenerator(path=PATH_TRAIN, data_temp=train_idx, data_shape=config["IMG_SHAPE"], zipf=ZIPFILE, batch_size=BATCH_SIZE, data_type=['dT4pca4', DATA_TYPE], shuffle=True)
+        valid_generator = LightConeGenerator(path=PATH_VALID, data_temp=valid_idx, data_shape=config["IMG_SHAPE"], zipf=ZIPFILE, batch_size=BATCH_SIZE, data_type=['dT4pca4', DATA_TYPE], shuffle=True)
 
         # Define generator functional
         def generator_train():
@@ -161,8 +154,8 @@ def objective(trial):
                 yield batch_xs, batch_ys
 
         # Create dataset from data generator
-        train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=(tf.float32, tf.float32), output_shapes=(tf.TensorShape([None]*(len(conf.IM_SHAPE)+2)), tf.TensorShape([None]*(len(conf.IM_SHAPE)+2))))
-        valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=(tf.float32, tf.float32), output_shapes=(tf.TensorShape([None]*(len(conf.IM_SHAPE)+2)), tf.TensorShape([None]*(len(conf.IM_SHAPE)+2))))
+        train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=(tf.float32, tf.float32), output_shapes=(tf.TensorShape([None]*(len(config["IMG_SHAPE"])+2)), tf.TensorShape([None]*(len(config["IMG_SHAPE"])+2))))
+        valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=(tf.float32, tf.float32), output_shapes=(tf.TensorShape([None]*(len(config["IMG_SHAPE"])+2)), tf.TensorShape([None]*(len(config["IMG_SHAPE"])+2))))
 
     # Distribute the dataset to the devices
     train_dist_dataset = strategy.experimental_distribute_dataset(train_dataset)
@@ -185,13 +178,13 @@ def objective(trial):
 
     # for Regression image + astropars
     if(TYPE_NET == 'full_serenet'):
-        model = FullSERENEt(img_shape=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
+        model = FullSERENEt(img_shape=np.append(config["IMG_SHAPE"], 1), params=hyperpar, path=PATH_OUT)
         model.compile(optimizer=OPTIMIZER, loss=[LOSS, LOSS], loss_weights=LOSS_WEIGHTS, metrics=[METRICS, METRICS])
     elif(TYPE_NET == 'serenet'):
-        model = SERENEt(img_shape1=np.append(conf.IM_SHAPE, 1), img_shape2=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
+        model = SERENEt(img_shape1=np.append(config["IMG_SHAPE"], 1), img_shape2=np.append(config["IMG_SHAPE"], 1), params=hyperpar, path=PATH_OUT)
         model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
     elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet'):
-        model = Unet(img_shape=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
+        model = Unet(img_shape=np.append(config["IMG_SHAPE"], 1), params=hyperpar, path=PATH_OUT)
         model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
 
     # define callbacks
@@ -204,9 +197,8 @@ def objective(trial):
     # model fit
     results = model.fit(x=train_dist_dataset,
                         batch_size=BATCH_SIZE, 
-                        epochs=conf.EPOCHS,
+                        epochs=config["EPOCHS"],
                         steps_per_epoch=size_train_dataset//BATCH_SIZE,
-                        initial_epoch=conf.RESUME_EPOCH,
                         callbacks=callbacks, 
                         validation_data=valid_dist_dataset,
                         validation_steps=size_valid_dataset//BATCH_SIZE,

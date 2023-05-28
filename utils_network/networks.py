@@ -5,6 +5,8 @@ from tensorflow.keras.layers import Input, Flatten, BatchNormalization, Activati
 from tensorflow.keras.layers import Dense, Conv2D, Conv2DTranspose, Conv3D, Conv3DTranspose, TimeDistributed
 from tensorflow.keras.layers import ConvLSTM2D #, ConvLSTM3D only from tf v2.6.0
 from tensorflow.keras.layers import MaxPooling2D, MaxPooling3D, AveragePooling2D, AveragePooling3D, UpSampling3D, Concatenate
+from tensorflow.keras.layers import LeakyReLU, PReLU
+from tensorflow.keras import activations
 #from keras.layers import MaxPooling3D, UpSampling3D, Concatenate
 from tensorflow.keras.utils import plot_model
 
@@ -42,12 +44,22 @@ def Unet(img_shape, params, path='./'):
         a = Conv(filters=nr_filts, kernel_size=kernel_size, padding='same',
                    kernel_initializer="he_normal", name='%s_C1' %layer_name)(prev_layer)
         a = BatchNormalization(name='%s_BN1' %layer_name)(a)
-        a = Activation(params['activation'], name='%s_A1' %layer_name)(a)
+        if params['activation'] == 'leakyrelu':
+            a = LeakyReLU(name='%s_A1' %layer_name)(a)
+        elif params['activation'] == 'prelu':
+            a = PReLU(name='%s_A1' %layer_name)(a)
+        else:
+            a = Activation(params['activation'], name='%s_A1' %layer_name)(a)
         # second block
         a = Conv2D(filters=nr_filts, kernel_size=kernel_size, padding='same',
                    kernel_initializer="he_normal", name='%s_C2' %layer_name)(a)
         a = BatchNormalization(name='%s_BN2' %layer_name)(a)
-        a = Activation(params['activation'], name='%s_A2' %layer_name)(a)
+        if params['activation'] == 'leakyrelu':
+            a = LeakyReLU(name='%s_A2' %layer_name)(a)
+        elif params['activation'] == 'prelu':
+            a = PReLU(name='%s_A2' %layer_name)(a)
+        else:
+            a = Activation(params['activation'], name='%s_A2' %layer_name)(a)
         return a
     
     # network input layer
@@ -139,12 +151,22 @@ def SERENEt(img_shape1, img_shape2, params, path='./'):
         a = Conv(filters=nr_filts, kernel_size=kernel_size, padding='same',
                    kernel_initializer="he_normal", name='%s_C1' %layer_name)(prev_layer)
         a = BatchNormalization(name='%s_BN1' %layer_name)(a)
-        a = Activation(params['activation'], name='%s_A1' %layer_name)(a)
+        if params['activation'] == 'leakyrelu':
+            a = LeakyReLU(name='%s_A1' %layer_name)(a)
+        elif params['activation'] == 'prelu':
+            a = PReLU(name='%s_A1' %layer_name)(a)
+        else:
+            a = Activation(params['activation'], name='%s_A1' %layer_name)(a)
         # second block
         a = Conv2D(filters=nr_filts, kernel_size=kernel_size, padding='same',
                    kernel_initializer="he_normal", name='%s_C2' %layer_name)(a)
         a = BatchNormalization(name='%s_BN2' %layer_name)(a)
-        a = Activation(params['activation'], name='%s_A2' %layer_name)(a)
+        if params['activation'] == 'leakyrelu':
+            a = LeakyReLU(name='%s_A2' %layer_name)(a)
+        elif params['activation'] == 'prelu':
+            a = PReLU(name='%s_A2' %layer_name)(a)
+        else:
+            a = Activation(params['activation'], name='%s_A2' %layer_name)(a)
         return a
 
     def BB_Layers(input_layer, i_layer):
@@ -253,12 +275,22 @@ def FullSERENEt(img_shape, params, path='./'):
         # first block
         a = Conv(filters=nr_filts, kernel_size=kernel_size, padding='same', kernel_initializer="he_normal", name='%s_C1' %layer_name)(prev_layer)
         a = BatchNormalization(name='%s_BN1' %layer_name)(a)
-        a = Activation(params['activation'], name='%s_A1' %layer_name)(a)
+        if params['activation'] == 'leakyrelu':
+            a = LeakyReLU(name='%s_A1' %layer_name)(a)
+        elif params['activation'] == 'prelu':
+            a = PReLU(name='%s_A1' %layer_name)(a)
+        else:
+            a = Activation(params['activation'], name='%s_A1' %layer_name)(a)
         
         # second block
         a = Conv2D(filters=nr_filts, kernel_size=kernel_size, padding='same', kernel_initializer="he_normal", name='%s_C2' %layer_name)(a)
         a = BatchNormalization(name='%s_BN2' %layer_name)(a)
-        a = Activation(params['activation'], name='%s_A2' %layer_name)(a)
+        if params['activation'] == 'leakyrelu':
+            a = LeakyReLU(name='%s_A2' %layer_name)(a)
+        elif params['activation'] == 'prelu':
+            a = PReLU(name='%s_A2' %layer_name)(a)
+        else:
+            a = Activation(params['activation'], name='%s_A2' %layer_name)(a)
         return a
 
     def BB_Layers(input_layer, i_layer):

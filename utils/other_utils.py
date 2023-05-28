@@ -323,10 +323,10 @@ def config_paths(conf, path_scratch=None, prefix=''):
 
 def config_path_opti(conf, path_scratch=None, prefix=''):
 
-    if(len(conf.IM_SHAPE) == 3):
-        PATH_OUT = '%s_%dcube/' %(path_scratch + prefix + datetime.now().strftime('%d-%mT%H-%M-%S'), conf.IM_SHAPE[0])
-    elif(len(conf.IM_SHAPE) == 2):
-        PATH_OUT = '%s_%dslice/' %(path_scratch + prefix + datetime.now().strftime('%d-%mT%H-%M-%S'), conf.IM_SHAPE[0])
+    if(len(conf["IMG_SHAPE"]) == 3):
+        PATH_OUT = '%s_%dcube/' %(path_scratch + prefix + datetime.now().strftime('%d-%mT%H-%M-%S'), conf["IMG_SHAPE"][0])
+    elif(len(conf["IMG_SHAPE"]) == 2):
+        PATH_OUT = '%s_%dslice/' %(path_scratch + prefix + datetime.now().strftime('%d-%mT%H-%M-%S'), conf["IMG_SHAPE"][0])
     else:
         print('!!! Wrong data dimension !!!')
     os.makedirs(PATH_OUT)
