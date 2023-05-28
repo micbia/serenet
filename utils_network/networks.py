@@ -16,12 +16,22 @@ def Unet(img_shape, params, path='./'):
     if(np.size(img_shape)-1 == 2):
         Conv = Conv2D
         ConvTranspose = Conv2DTranspose
-        #Pooling = MaxPooling2D
+
+        #default pooling layer
         Pooling = AveragePooling2D
+        if params['pooling_type'] == 'max':
+            Pooling = MaxPooling2D
+        elif params['pooling_type'] == 'average':
+            Pooling = AveragePooling2D
         ps = (2, 2)
     elif(np.size(img_shape)-1 == 3):
         Conv = Conv3D
-        Pooling = MaxPooling3D
+        #default pooling layer
+        Pooling = AveragePooling3D
+        if params['pooling_type'] == 'max':
+            Pooling = MaxPooling3D
+        elif params['pooling_type'] == 'average':
+            Pooling = AveragePooling3D
         ConvTranspose = Conv3DTranspose
         ps = (2, 2, 2)
     else:
@@ -104,12 +114,21 @@ def SERENEt(img_shape1, img_shape2, params, path='./'):
     if(np.size(img_shape1)-1 == 2):
         Conv = Conv2D
         ConvTranspose = Conv2DTranspose
-        #Pooling = MaxPooling2D
+        #default pooling layer
         Pooling = AveragePooling2D
+        if params['pooling_type'] == 'max':
+            Pooling = MaxPooling2D
+        elif params['pooling_type'] == 'average':
+            Pooling = AveragePooling2D
         ps = (2, 2)
     elif(np.size(img_shape1)-1 == 3):
         Conv = Conv3D
-        Pooling = MaxPooling3D
+        #default pooling layer
+        Pooling = AveragePooling3D
+        if params['pooling_type'] == 'max':
+            Pooling = MaxPooling3D
+        elif params['pooling_type'] == 'average':
+            Pooling = AveragePooling3D
         ConvTranspose = Conv3DTranspose
         ps = (2, 2, 2)
     else:
@@ -210,12 +229,21 @@ def FullSERENEt(img_shape, params, path='./'):
     if(np.size(img_shape)-1 == 2):
         Conv = Conv2D
         ConvTranspose = Conv2DTranspose
-        #Pooling = MaxPooling2D
+        #default pooling layer
         Pooling = AveragePooling2D
+        if params['pooling_type'] == 'max':
+            Pooling = MaxPooling2D
+        elif params['pooling_type'] == 'average':
+            Pooling = AveragePooling2D
         ps = (2, 2)
     elif(np.size(img_shape)-1 == 3):
         Conv = Conv3D
-        Pooling = MaxPooling3D
+        #default pooling layer
+        Pooling = AveragePooling3D
+        if params['pooling_type'] == 'max':
+            Pooling = MaxPooling3D
+        elif params['pooling_type'] == 'average':
+            Pooling = AveragePooling3D
         ConvTranspose = Conv3DTranspose
         ps = (2, 2, 2)
     else:
