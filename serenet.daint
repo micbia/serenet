@@ -29,7 +29,7 @@ source $HOME/miniconda3/etc/profile.d/conda.sh
 
 
 #python serenet_optimization.py $CONFIG_PATH/net_SegUnet_lc.ini
-conda run -n serenet python serenet_optimization.py $CONFIG_PATH/net_SegUnet_lc.ini
+conda run -n serenet python serenet_optimization.py $CONFIG_PATH/optimization/net_SegUnet_lc.json
 #python serenet.py $CONFIG_PATH/net_SegUnet_lc.ini
 #python serenet.py $CONFIG_PATH/net_SERENEt_lc.ini
 #python serenet_cross_validation.py $CONFIG_PATH/net_SegUnet_lc.ini

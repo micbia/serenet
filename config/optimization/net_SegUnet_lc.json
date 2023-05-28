@@ -1,12 +1,10 @@
 {
-    "TRAINING":{
-        "AUGMENT" : "segunet",
-        "IMG_SHAPE" : [128, 128],
-        "EPOCHS" : 3,
-        "LOSS" : "balanced_cross_entropy",
-        "METRICS" : ["iou", "matthews_coef", "balanced_accuracy", "FalseNegativeRate", "FalsePositiveRate", "precision"],
-        "IO_PATH" : "/store/ska/sk09/serenet/",
-        "SCRATCH_PATH" : "/scratch/snx3000/mdesanti/output_serenet/",
-        "DATASET_PATH" : ["dataLC_128_train_190922/", "dataLC_128_valid_190922/"]
-    }
+    "AUGMENT" : "segunet",
+    "IMG_SHAPE" : [128, 128],
+    "EPOCHS" : 2,
+    "LOSS" : "balanced_cross_entropy",
+    "METRICS" : ["iou", "matthews_coef", "balanced_accuracy", "FalseNegativeRate", "FalsePositiveRate", "precision"],
+    "IO_PATH" : "/store/ska/sk09/serenet/",
+    "SCRATCH_PATH" : "/scratch/snx3000/mdesanti/output_serenet/",
+    "DATASET_PATH" : ["dataLC_128_train_190922/", "dataLC_128_valid_190922/"]
 }
