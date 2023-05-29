@@ -1,7 +1,7 @@
 {
     "AUGMENT" : "segunet",
     "IMG_SHAPE" : [128, 128],
-    "EPOCHS" : 1,
+    "EPOCHS" : 120,
     "LOSS" : "balanced_cross_entropy",
     "METRICS" : ["iou", "matthews_coef", "balanced_accuracy", "FalseNegativeRate"],
     "IO_PATH" : "/store/ska/sk09/serenet/",
