@@ -39,9 +39,9 @@ def objective(trial):
     final_activation = trial.suggest_categorical('final_activation', ['linear', 'sigmoid',None])
     depth = trial.suggest_int('depth', 2, 6)
     pooling_type = trial.suggest_categorical('pooling_type', ['max', 'average'])
-
     learning_rate = trial.suggest_float('learning_rate', 1e-5, 1e-1, log=True)
-    batch_size = trial.suggest_int('batch_size', 8, 64, log=True)
+    #batch_size = trial.suggest_int('batch_size', 8, 64, log=True)
+    batch_size = 32
 
     wandbConfig = dict(trial.params)
     wandbConfig["trialNumber"] = trial.number
@@ -78,7 +78,7 @@ def objective(trial):
 
     # Load data
     #size_train_dataset, size_valid_dataset = 10000*552, 1500*552
-    size_train_dataset, size_valid_dataset = 10000//50, 1500//15
+    size_train_dataset, size_valid_dataset = int(10000//1.65), int(1500//1)
 
 
     train_idx = np.arange(0, size_train_dataset, dtype=int)
@@ -189,8 +189,8 @@ def objective(trial):
 
 
     # define callbacks
-    callbacks = [EarlyStopping(patience=100, verbose=1, restore_best_weights=True, monitor='val_iou'),
-                ReduceLR(monitor='val_loss', factor=0.1, patience=10, min_lr=1e-7, verbose=1)]#,
+    callbacks = [EarlyStopping(patience=30, verbose=1, restore_best_weights=True, monitor='val_iou', mode='max'),
+                ReduceLR(monitor='val_loss', factor=0.1, patience=20, min_lr=1e-7, verbose=1)]#,
                 #SaveModelCheckpoint(PATH_OUT+'checkpoints/model-sem21cm_ep{epoch:d}.tf', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, best=RESUME_LOSS),
                 #HistoryCheckpoint(filepath=PATH_OUT+'outputs/', verbose=0, save_freq=1, in_epoch=conf.RESUME_EPOCH)]
 
@@ -219,8 +219,9 @@ def objective(trial):
     return wandbConfig[config["OPTIMIZATION"]["METRIC"]]
 
 
-study = optuna.create_study(direction=config["OPTIMIZATION"]["DIRECTION"])
-study.optimize(objective, n_trials=10)
+study = optuna.create_study(study_name="segunet",direction=config["OPTIMIZATION"]["DIRECTION"],storage='sqlite:///utils_optimiz/studies.db',load_if_exists=True)
+# change the path of the study.db file to another path
+study.optimize(objective, n_trials=1)
 
 print("************* finished *****************")
 print(study.best_params)
