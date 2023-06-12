@@ -61,3 +61,5 @@ for i in range(len(df_hyperparams)):
 
     # sleep for 2 second to not overload the server
     time.sleep(2)
+    # sleep for 2 second to not overload the server
+    time.sleep(2)
