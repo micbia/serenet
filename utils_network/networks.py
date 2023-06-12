@@ -2,7 +2,7 @@ import numpy as np
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Flatten, BatchNormalization, Activation, Dropout, concatenate, Multiply
-from tensorflow.keras.layers import Dense, Conv2D, Conv2DTranspose, Conv3D, Conv3DTranspose, TimeDistributed
+from tensorflow.keras.layers import Dense, Conv2D, Conv2DTranspose, Conv3D, Conv3DTranspose, TimeDistributed, Conv2D, BatchNormalization, Activation, LSTM, TimeDistributed, Reshape
 from tensorflow.keras.layers import ConvLSTM2D #, ConvLSTM3D only from tf v2.6.0
 from tensorflow.keras.layers import MaxPooling2D, MaxPooling3D, AveragePooling2D, AveragePooling3D, UpSampling3D, Concatenate
 from tensorflow.keras.layers import LeakyReLU, PReLU
@@ -549,5 +549,47 @@ def Conv3D_model(input_shape, params,path='./'):
         output = Conv3D(input_shape[-1], kernel_size=1)(conv5)
 
     model = Model(inputs=[inputs], outputs=[output])
+
+    return model
+
+def Conv2D_LSTM(image_shape, params):
+    print('Create 2D Convolution combined with LSTM for the third axis...\n')
+
+    # Convolution Layer
+    def Conv_Layer(prev_layer, kernel_size, nr_filts, layer_name):
+        l = Conv2D(filters=nr_filts, kernel_size=kernel_size, padding='same', 
+                   kernel_initializer="he_normal", name='%s_C' % layer_name)(prev_layer)
+        l = BatchNormalization(name='%s_BN' % layer_name)(l)
+
+        if params['activation'] == 'leakyrelu':
+            l = LeakyReLU(name='%s_A' % layer_name)(l)
+        elif params['activation'] == 'prelu':
+            l = PReLU(name='%s_A' % layer_name)(l)
+        else:
+            l = Activation(params['activation'], name='%s_A' % layer_name)(l)
+        return l
+
+    # Input
+    input_img = Input(shape=image_shape, name='Image')
+    
+    # Applying Conv2D Layers
+    l = input_img
+    for i in range(params['conv_layers']):
+        l = Conv_Layer(prev_layer=l, nr_filts=params['filters'], kernel_size=params['kernel_size'], layer_name='Conv2D%d' % (i+1))
+        l = Dropout(params['dropout'], name='D%d_D' % (i+1))(l)
+
+    # Reshaping output for LSTM layer
+    reshaped_output = Reshape((-1, params['lstm_hidden_units']))(l)
+
+    # LSTM Layer
+    lstm_output = LSTM(params['lstm_hidden_units'], return_sequences=True)(reshaped_output)
+
+    # Final Conv Layer
+    output_image = Conv2D(filters=image_shape[-1], kernel_size=params['kernel_size'], strides=1, padding='same', name='out_C')(lstm_output)
+
+    if(params['final_activation'] != None):
+        output_image = Activation(params['final_activation'], name='final_activation')(output_image)
+
+    model = Model(inputs=[input_img], outputs=[output_image], name='Conv2D_LSTM_Model')
 
     return model
