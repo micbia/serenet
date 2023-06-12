@@ -1,0 +1,6 @@
+{'coarse_dim': 218, 'dropout': 0.46, 'kernel_size': 3, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 5, 'pooling_type': 'max', 'learning_rate': 0.05086290046168929, 'trialNumber': 34, 'val_loss': 0.07572576403617859, 'iou': 0.8817755579948425, 'matthews_coef': 0.8720912337303162}
+
+{'coarse_dim': 214, 'dropout': 0.46, 'kernel_size': 3, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 5, 'pooling_type': 'max', 'learning_rate': 0.0494592055890676, 'trialNumber': 33, 'val_loss': 0.08043446391820908, 'iou': 0.8738968968391418, 'matthews_coef': 0.8657531142234802}
+
+{'coarse_dim': 217, 'dropout': 0.46, 'kernel_size': 3, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 5, 'pooling_type': 'max', 'learning_rate': 0.04710403155270218, 'trialNumber': 35, 'val_loss': 0.07351529598236084, 'iou': 0.8836989998817444, 'matthews_coef': 0.8761646151542664}
+

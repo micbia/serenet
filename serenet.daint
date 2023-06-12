@@ -1,12 +1,12 @@
 #!/bin/bash -l
-#SBATCH --job-name=segunet_opti
+#SBATCH --job-name=serenet_opti
 #SBATCH --account=sk09
 #SBATCH --nodes=1
 ##SBATCH --ntasks-per-node=1
 #SBATCH --constraint=gpu
 #SBATCH --gres=gpu:1
 
-#SBATCH --time=10:00:00
+#SBATCH --time=24:00:00
 
 #SBATCH --output=logs/serenet.%j.out
 #SBATCH --error=logs/serenet.%j.err
@@ -27,9 +27,10 @@ source $HOME/miniconda3/etc/profile.d/conda.sh
 #conda activate serenet
 #source .venv/bin/activate
 
-
 #python serenet_optimization.py $CONFIG_PATH/net_SegUnet_lc.ini
-conda run -n serenet python serenet_optimization.py $CONFIG_PATH/optimization/net_SegUnet_lc.json
+conda run -n serenet python serenet_optimization.py $CONFIG_PATH/optimization/net_SERENEt_lc.json
+
+#conda run -n serenet python hello.py 
 #python serenet.py $CONFIG_PATH/net_SegUnet_lc.ini
 #python serenet.py $CONFIG_PATH/net_SERENEt_lc.ini
 #python serenet_cross_validation.py $CONFIG_PATH/net_SegUnet_lc.ini

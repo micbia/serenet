@@ -46,7 +46,7 @@ for i in range(len(df_hyperparams)):
     wandbMetrics = dict(df_metrics.iloc[i])
 
     wandb_kwargs = {
-    "project":"segunet",
+    "project":"segunet2",
     "config":wandbConfig,
     "reinit":True
     } 

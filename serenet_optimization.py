@@ -32,14 +32,14 @@ os.system('cp %s %s' %(config_file, PATH_OUT))
 def objective(trial):
 
     # Hyperparemeters
-    coarse_dim = trial.suggest_int('coarse_dim', 128, 512,log=True)
-    dropout = trial.suggest_float('dropout', 0.0, 0.5,step=0.02)
+    coarse_dim = trial.suggest_int('coarse_dim', 128, 512, step=32)
+    dropout = trial.suggest_float('dropout', 0.0, 0.4,step=0.02)
     kernel_size = trial.suggest_int('kernel_size', 3, 11)
-    activation = trial.suggest_categorical('activation', ['relu', 'elu', 'leakyrelu', 'prelu'])
-    final_activation = trial.suggest_categorical('final_activation', ['linear', 'sigmoid',None])
-    depth = trial.suggest_int('depth', 2, 6)
+    activation = trial.suggest_categorical('activation', ['relu','leakyrelu'])
+    final_activation = trial.suggest_categorical('final_activation', ['sigmoid',None])
+    depth = 4 #trial.suggest_int('depth', 2, 5)
     pooling_type = trial.suggest_categorical('pooling_type', ['max', 'average'])
-    learning_rate = trial.suggest_float('learning_rate', 1e-5, 1e-1, log=True)
+    learning_rate = trial.suggest_float('learning_rate', 5e-4, 2e-3, log=True)
     #batch_size = trial.suggest_int('batch_size', 8, 64, log=True)
     batch_size = 32
 
@@ -78,7 +78,7 @@ def objective(trial):
 
     # Load data
     #size_train_dataset, size_valid_dataset = 10000*552, 1500*552
-    size_train_dataset, size_valid_dataset = int(10000//1.65), int(1500//1)
+    size_train_dataset, size_valid_dataset = 10000, 1500
 
 
     train_idx = np.arange(0, size_train_dataset, dtype=int)
@@ -189,7 +189,7 @@ def objective(trial):
 
 
     # define callbacks
-    callbacks = [EarlyStopping(patience=30, verbose=1, restore_best_weights=True, monitor='val_iou', mode='max'),
+    callbacks = [EarlyStopping(patience=30, verbose=1, restore_best_weights=True, monitor=f'val_{config["OPTIMIZATION"]["METRIC"]}', mode=config["OPTIMIZATION"]["DIRECTION"][:3]),
                 ReduceLR(monitor='val_loss', factor=0.1, patience=20, min_lr=1e-7, verbose=1)]#,
                 #SaveModelCheckpoint(PATH_OUT+'checkpoints/model-sem21cm_ep{epoch:d}.tf', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=False, best=RESUME_LOSS),
                 #HistoryCheckpoint(filepath=PATH_OUT+'outputs/', verbose=0, save_freq=1, in_epoch=conf.RESUME_EPOCH)]
@@ -206,9 +206,15 @@ def objective(trial):
                         shuffle=True)
 
 
-    wandbConfig["val_loss"] = results.history['val_loss'][-1]
-    wandbConfig["iou"] = results.history['val_iou'][-1]
-    wandbConfig["matthews_coef"] = results.history['val_matthews_coef'][-1]
+    # get the best value of the metric in history
+    wandbConfig[config["OPTIMIZATION"]["METRIC"]] = max(results.history['val_'+config["OPTIMIZATION"]["METRIC"]])
+
+    # get the index of the best value of the metric in history
+    idx = results.history['val_'+config["OPTIMIZATION"]["METRIC"]].index(wandbConfig[config["OPTIMIZATION"]["METRIC"]])
+
+    # get the best value of the metric for all metrics
+    for m in config["OPTIMIZATION"]["LOGGED_METRICS"]:
+        wandbConfig[m] = results.history['val_'+m][idx]
 
 
     # save optimization parameters and results for later use in wandb
@@ -219,7 +225,7 @@ def objective(trial):
     return wandbConfig[config["OPTIMIZATION"]["METRIC"]]
 
 
-study = optuna.create_study(study_name="segunet",direction=config["OPTIMIZATION"]["DIRECTION"],storage='sqlite:///utils_optimiz/studies.db',load_if_exists=True)
+study = optuna.create_study(study_name=config["OPTIMIZATION"]["STUDY_NAME"],direction=config["OPTIMIZATION"]["DIRECTION"],storage='sqlite:///utils_optimiz/study_2.db',load_if_exists=True)
 # change the path of the study.db file to another path
 study.optimize(objective, n_trials=1)
 

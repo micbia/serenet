@@ -1,0 +1,18 @@
+{'coarse_dim': 155, 'dropout': 0.4, 'kernel_size': 6, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 3, 'pooling_type': 'max', 'learning_rate': 0.023782297266491313, 'trialNumber': 25, 'val_loss': 0.07216024398803711, 'iou': 0.8866369724273682, 'matthews_coef': 0.8783901929855347}
+{'coarse_dim': 151, 'dropout': 0.5, 'kernel_size': 5, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 4, 'pooling_type': 'max', 'learning_rate': 0.04992917825358094, 'trialNumber': 32, 'val_loss': 0.07192032039165497, 'iou': 0.8869196772575378, 'matthews_coef': 0.8790056705474854}
+
+{'coarse_dim': 402, 'dropout': 0.4, 'kernel_size': 8, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 3, 'pooling_type': 'max', 'learning_rate': 0.019938896993869182, 'trialNumber': 26, 'val_loss': 0.07436477392911911, 'iou': 0.8845700621604919, 'matthews_coef': 0.8759816884994507}
+{'coarse_dim': 153, 'dropout': 0.5, 'kernel_size': 5, 'activation': 'relu', 'final_activation': 'sigmoid', 'depth': 4, 'pooling_type': 'max', 'learning_rate': 0.003278458550487967, 'trialNumber': 28, 'val_loss': 0.0721173882484436, 'iou': 0.8855177760124207, 'matthews_coef': 0.8776191473007202}
+
+{'coarse_dim': 394, 'dropout': 0.42, 'kernel_size': 6, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 3, 'pooling_type': 'max', 'learning_rate': 0.022806659853035278, 'trialNumber': 22, 'val_loss': 0.07202519476413727, 'iou': 0.886655330657959, 'matthews_coef': 0.878710150718689}
+
+{'coarse_dim': 155, 'dropout': 0.4, 'kernel_size': 6, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 3, 'pooling_type': 'max', 'learning_rate': 0.030204892847276944, 'trialNumber': 24, 'val_loss': 0.07222345471382141, 'iou': 0.8864144086837769, 'matthews_coef': 0.8784254193305969}
+{'coarse_dim': 154, 'dropout': 0.46, 'kernel_size': 5, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 4, 'pooling_type': 'max', 'learning_rate': 0.04188002821527107, 'trialNumber': 31, 'val_loss': 0.07211721688508987, 'iou': 0.8860393166542053, 'matthews_coef': 0.87838214635849}
+
+{'coarse_dim': 154, 'dropout': 0.4, 'kernel_size': 6, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 3, 'pooling_type': 'max', 'learning_rate': 0.03252802782820447, 'trialNumber': 23, 'val_loss': 0.07189548760652542, 'iou': 0.886847972869873, 'matthews_coef': 0.8782045245170593}
+{'coarse_dim': 164, 'dropout': 0.5, 'kernel_size': 5, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 4, 'pooling_type': 'max', 'learning_rate': 0.005381188298667056, 'trialNumber': 30, 'val_loss': 0.07173588126897812, 'iou': 0.886441707611084, 'matthews_coef': 0.8787559270858765}
+
+{'coarse_dim': 414, 'dropout': 0.5, 'kernel_size': 6, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 3, 'pooling_type': 'max', 'learning_rate': 0.025153679525608257, 'trialNumber': 27, 'val_loss': 0.07244440913200378, 'iou': 0.886476457118988, 'matthews_coef': 0.8784899711608887}
+
+{'coarse_dim': 405, 'dropout': 0.4, 'kernel_size': 6, 'activation': 'leakyrelu', 'final_activation': 'sigmoid', 'depth': 3, 'pooling_type': 'max', 'learning_rate': 0.02067711154437243, 'trialNumber': 21, 'val_loss': 0.07355351001024246, 'iou': 0.885769784450531, 'matthews_coef': 0.8769479990005493}
+

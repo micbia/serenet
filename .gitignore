@@ -1,4 +1,5 @@
 .venv
+wandb/
 # Folder
 __pycache__/
 utils/__pycache__/__init__.cpython-39.pyc

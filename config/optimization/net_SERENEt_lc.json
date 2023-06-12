@@ -1,0 +1,16 @@
+{
+    "AUGMENT" : "serenet",
+    "IMG_SHAPE" : [128, 128],
+    "EPOCHS" : 160,
+    "LOSS" : "r2score_loss",
+    "METRICS" : ["r2score", "mse"],
+    "IO_PATH" : "/store/ska/sk09/serenet/",
+    "SCRATCH_PATH" : "/scratch/snx3000/mdesanti/output_serenet_opti/",
+    "DATASET_PATH" : ["dataLC_128_train_190922/", "dataLC_128_valid_190922/"],
+    "OPTIMIZATION": {
+        "METRIC" : "r2score",
+        "DIRECTION" : "maximize",
+        "LOGGED_METRICS" : ["r2score", "mean_squared_error"],
+        "STUDY_NAME" : "serenet_opti"
+    }
+}

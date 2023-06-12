@@ -1,7 +1,7 @@
 {
     "AUGMENT" : "segunet",
     "IMG_SHAPE" : [128, 128],
-    "EPOCHS" : 120,
+    "EPOCHS" : 1,
     "LOSS" : "balanced_cross_entropy",
     "METRICS" : ["iou", "matthews_coef", "balanced_accuracy", "FalseNegativeRate"],
     "IO_PATH" : "/store/ska/sk09/serenet/",
@@ -9,6 +9,7 @@
     "DATASET_PATH" : ["dataLC_128_train_190922/", "dataLC_128_valid_190922/"],
     "OPTIMIZATION": {
         "METRIC" : "iou",
-        "DIRECTION" : "maximize"
+        "DIRECTION" : "maximize",
+        "STUDY_NAME" : "segunet"
     }
 }

@@ -514,14 +514,14 @@ def LSTM_Unet(img_shape, params, path='./'):
     #plot_model(model, to_file=path+'LSTMUNet_visualisation.png', show_shapes=True, show_layer_names=True)
     return model
 
-def Conv3D_model(input_shape, params):
+def Conv3D_model(input_shape, params,path='./'):
     def Conv3D_Block(x, filters, kernel_size, activation):
         x = Conv3D(filters, kernel_size, padding='same', kernel_initializer="he_normal")(x)
         x = BatchNormalization()(x)
         x = Activation(activation)(x)
         return x
 
-    inputs = Input(input_shape)
+    inputs = Input(shape=input_shape, name='Image')
 
     # Encoder
     conv1 = Conv3D_Block(inputs, params['coarse_dim'], params['kernel_size'], params['activation'])

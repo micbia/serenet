@@ -8,7 +8,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import ELU, LeakyReLU, PReLU, ReLU
 
 from config.net_config import NetworkConfig
-from utils_network.networks import Unet, SERENEt, FullSERENEt
+from utils_network.networks import Unet, SERENEt, FullSERENEt,Conv3D_model
 from utils_network.metrics import get_avail_metris
 from utils_network.callbacks import HistoryCheckpoint, SaveModelCheckpoint, ReduceLR
 from utils_network.data_generator import LightConeGenerator, LightConeGenerator_SERENEt, LightConeGenerator_FullSERENEt
@@ -120,8 +120,8 @@ elif(TYPE_NET == 'serenet'):
     # Create dataset from data generator
     train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=({'Image1': tf.float32, 'Image2': tf.float32}, {'out_img': tf.float32}))
     valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=({'Image1': tf.float32, 'Image2': tf.float32}, {'out_img': tf.float32}))
-elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet'):
-    if(TYPE_NET == 'segunet'):
+elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet' or 'cnn3d'):
+    if(TYPE_NET == 'segunet' or TYPE_NET == 'cnn3d'):
         DATA_TYPE = 'xH'
     elif(TYPE_NET == 'recunet'):
         DATA_TYPE = 'dT2'
@@ -211,6 +211,9 @@ with strategy.scope():
             model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
         elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet'):
             model = Unet(img_shape=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
+            model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
+        elif(TYPE_NET == 'cnn3d'):
+            model = Conv3D_model(img_shape=np.append(conf.IM_SHAPE, 1), params=hyperpar, path=PATH_OUT)
             model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=METRICS)
 
 # define callbacks
