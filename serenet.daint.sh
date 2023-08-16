@@ -1,6 +1,6 @@
 #!/bin/bash -l
 #SBATCH --job-name=serenet
-#SBATCH --account=sk09
+#SBATCH --account=sk014
 #SBATCH --nodes=1
 ##SBATCH --ntasks-per-node=1
 #SBATCH --constraint=gpu
