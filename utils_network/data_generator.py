@@ -1,4 +1,4 @@
-import zipfile, tarfile, math, random, numpy as np, os, sys
+import math, random, numpy as np, os, sys
 import pandas as pd
 
 from datetime import datetime
@@ -9,7 +9,7 @@ class DataGenerator(Sequence):
     """
     Data generator of 3D data (calculate noise cube and smooth data).
     """
-    def __init__(self, path='./', data_temp=None, batch_size=None, zipf=False, data_shape=None, shuffle=True):
+    def __init__(self, path='./', data_temp=None, batch_size=None, data_shape=None, shuffle=True):
         """
         Arguments:
          tobs: int
@@ -20,18 +20,14 @@ class DataGenerator(Sequence):
         self.batch_size = batch_size
         self.data_shape = data_shape
         self.shuffle = shuffle
-        self.zipf = zipf
-        if(self.zipf):
-            self.content = np.loadtxt(self.path+'data/content.txt', dtype=int)
-            self.path_in_zip = self.path[self.path[:-1].rfind('/')+1:]+'data/'
         self.data_size = len(self.data_temp)
         self.on_epoch_end()
         
-        self.astro_par = np.loadtxt('%sparameters/astro_params.txt' %self.path, unpack=True)
-        with open('%sparameters/user_params.txt' %self.path,'r') as f:
-            self.user_par = eval(f.read())
+        #self.astro_par = np.loadtxt('%sparameters/astro_params.txt' %self.path, unpack=True)
+        #with open('%sparameters/user_params.txt' %self.path,'r') as f:
+        #    self.user_par = eval(f.read())
 
-        self.redshift = np.loadtxt('%slc_redshifts.txt' %self.path)
+        #self.redshift = np.loadtxt('%slc_redshifts.txt' %self.path)
 
     def __len__(self):
         # number of batches
@@ -75,59 +71,151 @@ class DataGenerator(Sequence):
         return rotated_data
 
 # -------------------------------------------------------------------
-class LightConeGenerator(DataGenerator):
+class OneLightConeGenerator(DataGenerator):
     """
     Michele, 21 Sep 2021:
     Data generator of lightcone data meant for SegU-Net or RecU-Net with one input and one output.
     Change the data_type variable for selecting the target.
     """
-    def __init__(self, path='./', data_temp=None, batch_size=None, zipf=False, data_shape=None, data_type=['dT4pca4', 'xH'], shuffle=False):
-        super().__init__(path, data_temp, batch_size, zipf, data_shape, shuffle)
+    def __init__(self, path='./', data_temp=None, batch_size=None, data_shape=None, data_type=['dT4pca4', 'xH'], shuffle=False):
+        super().__init__(path, data_temp, batch_size, data_shape, shuffle)
         self.data_type = data_type
         self.nr_sample = len(glob(self.path+'data/'+self.data_type[0]+'*'))
         
     def __getitem__(self, index):
         indexes = self.indexes[index*self.batch_size:(index+1)*self.batch_size]
         
-        #self.random_xHI = random.random()
-        #self.random_xHI = round(random.uniform(0.2, 0.3), 4)        # TODO: change this before recompile
-        #self.random_z = round(random.uniform(7., 11.), 5)
+        X = np.zeros((np.append(self.batch_size, self.data_shape)))
+        y = np.zeros((np.append(self.batch_size, self.data_shape)))
+        
+        idx = 0
+        dT = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[0], idx), dimensions=3)
+        xH = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[1], idx), dimensions=3)
 
+        for i, idx in enumerate(indexes):
+            # apply manipolation on the LC data
+            rseed_freq = np.random.randint(xH.shape[2])
+            X[i], y[i] = self._lc_data(x=dT, y=xH, rseed2=rseed_freq)
+            
+        # add channel dimension
+        X = X[..., np.newaxis]
+        y = y[..., np.newaxis]
+
+        return X, y
+
+    def _lc_data(self, x, y, rseed2):
+        if(len(self.data_shape) == 2):
+            # for U-Net on slices
+            dT_sampled = x[:, :, rseed2].astype(np.float32)
+            xH_sampled = y[:, :, rseed2].astype(np.float32)
+        elif(len(self.data_shape) == 3):
+            # for 3D U-Net on frequency cube
+            freq_size = self.data_shape[2]
+            rseed2 = random.randint(freq_size, x.shape[-1]-(freq_size+1)) 
+
+            dT_sampled = x[:, :, rseed2-freq_size//2 : rseed2+freq_size//2]
+            xH_sampled = y[:, :, rseed2-freq_size//2 : rseed2+freq_size//2]
+        else:
+            raise ValueError('wrong dimension for data_shape: %d' %len(self.data_shape))
+         
+        if(self.data_shape != dT_sampled.shape):
+            ix, iy = np.random.randint(low=self.data_shape[0]//2, high=dT_sampled.shape[0]-self.data_shape[0]//2, size=2)
+
+            dT_sampled = dT_sampled[ix-self.data_shape[0]//2: ix+self.data_shape[0]//2, iy-self.data_shape[0]//2: iy+self.data_shape[0]//2]
+            xH_sampled = xH_sampled[ix-self.data_shape[0]//2: ix+self.data_shape[0]//2, iy-self.data_shape[0]//2: iy+self.data_shape[0]//2]
+
+        #rseed_rot = np.random.randint(0, 3)
+        #dT_sampled = self._rotate_data(data=dT_sampled, rotate_angle=rseed_rot, rot_axis=None)
+        #xH_sampled = self._rotate_data(data=xH_sampled, rotate_angle=rseed_rot, rot_axis=None)
+        
+        #dT_sampled = self._rescaledata(arr=dT_sampled, a=1e-3, b=100.)
+        #xH_sampled = self._rescaledata(arr=xH_sampled, a=1e-7, b=1.-1e-7)
+        return dT_sampled, xH_sampled
+
+class Auto1DGenerator(DataGenerator):
+    """
+    Michele, 21 Sep 2021:
+    Data generator of lightcone data meant for SegU-Net or RecU-Net with one input and one output.
+    Change the data_type variable for selecting the target.
+    """
+    def __init__(self, path='./', data_temp=None, batch_size=None, data_shape=None, data_type=['dT4pca4', 'xH'], shuffle=False):
+        super().__init__(path, data_temp, batch_size, data_shape, shuffle)
+        self.data_type = data_type
+        self.nr_sample = len(glob(self.path+'data/'+self.data_type[0]+'*'))
+        
+    def __getitem__(self, index):
+        indexes = self.indexes[index*self.batch_size:(index+1)*self.batch_size]
+        
+        X = np.zeros((np.append(self.batch_size, self.data_shape)))
+        y = np.zeros((np.append(self.batch_size, self.data_shape)))
+        
+        idx = 0
+        dT = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[0], idx), dimensions=3)
+        xH = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[1], idx), dimensions=3)
+
+        for i, idx in enumerate(indexes):
+            # apply manipolation on the LC data
+            rseed_freq = np.random.randint(xH.shape[2])
+            X[i], y[i] = self._lc_data(x=dT, y=xH, rseed2=rseed_freq)
+            
+        # add channel dimension
+        X = X[..., np.newaxis]
+        y = y[..., np.newaxis]
+
+        return X, y
+
+    def _lc_data(self, x, y, rseed2):
+        if(len(self.data_shape) == 2):
+            # for U-Net on slices
+            dT_sampled = x[:, :, rseed2].astype(np.float32)
+            xH_sampled = y[:, :, rseed2].astype(np.float32)
+        elif(len(self.data_shape) == 3):
+            # for 3D U-Net on frequency cube
+            freq_size = self.data_shape[2]
+            rseed2 = random.randint(freq_size, x.shape[-1]-(freq_size+1)) 
+
+            dT_sampled = x[:, :, rseed2-freq_size//2 : rseed2+freq_size//2]
+            xH_sampled = y[:, :, rseed2-freq_size//2 : rseed2+freq_size//2]
+        else:
+            raise ValueError('wrong dimension for data_shape: %d' %len(self.data_shape))
+         
+        if(self.data_shape != dT_sampled.shape):
+            ix, iy = np.random.randint(low=self.data_shape[0]//2, high=dT_sampled.shape[0]-self.data_shape[0]//2, size=2)
+
+            dT_sampled = dT_sampled[ix-self.data_shape[0]//2: ix+self.data_shape[0]//2, iy-self.data_shape[0]//2: iy+self.data_shape[0]//2]
+            xH_sampled = xH_sampled[ix-self.data_shape[0]//2: ix+self.data_shape[0]//2, iy-self.data_shape[0]//2: iy+self.data_shape[0]//2]
+
+        #rseed_rot = np.random.randint(0, 3)
+        #dT_sampled = self._rotate_data(data=dT_sampled, rotate_angle=rseed_rot, rot_axis=None)
+        #xH_sampled = self._rotate_data(data=xH_sampled, rotate_angle=rseed_rot, rot_axis=None)
+        
+        #dT_sampled = self._rescaledata(arr=dT_sampled, a=1e-3, b=100.)
+        #xH_sampled = self._rescaledata(arr=xH_sampled, a=1e-7, b=1.-1e-7)
+        return dT_sampled, xH_sampled
+
+class LightConeGenerator(DataGenerator):
+    """
+    Michele, 21 Sep 2021:
+    Data generator of lightcone data meant for SegU-Net or RecU-Net with one input and one output.
+    Change the data_type variable for selecting the target.
+    """
+    def __init__(self, path='./', data_temp=None, batch_size=None, data_shape=None, data_type=['dT4pca4', 'xH'], shuffle=False):
+        super().__init__(path, data_temp, batch_size, data_shape, shuffle)
+        self.data_type = data_type
+        self.nr_sample = len(glob(self.path+'data/'+self.data_type[0]+'*'))
+        
+    def __getitem__(self, index):
+        indexes = self.indexes[index*self.batch_size:(index+1)*self.batch_size]
+        
         X = np.zeros((np.append(self.batch_size, self.data_shape)))
         y = np.zeros((np.append(self.batch_size, self.data_shape)))
         for i, idx in enumerate(indexes):
-            if(self.zipf):
-                i_tar = self.content[idx]
-                name_tar = '%sdata/%s_part%d.tar.gz' %(self.path, self.path[self.path[:-1].rfind('/')+1:-1], i_tar)
-                mytar = tarfile.open(name_tar, 'r')
+            
+            dT = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[0], idx%self.nr_sample), dimensions=3)
+            xH = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[1], idx%self.nr_sample), dimensions=3)
 
-                # load file containing TarInfo
-                tar_content = np.load('%sdata/tar_content_part%d.npy' %(self.path, i_tar), allow_pickle=True) 
-                tar_names = np.load('%sdata/tar_names_part%d.npy' %(self.path, i_tar))
-                
-                # create DataFrame to easly pick the correct TarInfo
-                tar_df = pd.DataFrame(data=tar_content, index=tar_names)
-
-                # extract file
-                member = tar_df.loc['%s%s_21cm_i%d.bin' %(self.path_in_zip, self.data_type[0], idx),0]
-                temp_data = mytar.extractfile(member).read()
-                temp_mesh = np.frombuffer(temp_data, count=3, dtype='int32')
-                dT = np.frombuffer(temp_data, count=np.prod(temp_mesh), dtype='float32').reshape(temp_mesh, order='C')
-                member = tar_df.loc['%s%s_21cm_i%d.bin' %(self.path_in_zip, self.data_type[1], idx),0]
-                temp_data = mytar.extractfile(member).read()
-                temp_mesh = np.frombuffer(temp_data, count=3, dtype='int32')
-                xH = np.frombuffer(temp_data, count=np.prod(temp_mesh), dtype='float32').reshape(temp_mesh, order='C')
-                mytar.close()
-                
-                # apply manipolation on the LC data
-                X[i], y[i] = self._lc_data(x=dT, y=xH)
-            else:
-                # read LC
-                dT = self._read_cbin(filename='%s%s_21cm_i%d.bin' %(self.path+'data/', self.data_type[0], idx%self.nr_sample), dimensions=3)
-                xH = self._read_cbin(filename='%s%s_21cm_i%d.bin' %(self.path+'data/', self.data_type[1], idx%self.nr_sample), dimensions=3)
-
-                # apply manipolation on the LC data
-                X[i], y[i] = self._lc_data(x=dT, y=xH, rseed2=idx%dT.shape[-1])
+            # apply manipolation on the LC data
+            X[i], y[i] = self._lc_data(x=dT, y=xH, rseed2=idx%dT.shape[-1])
 
         # add channel dimension
         X = X[..., np.newaxis]
@@ -138,10 +226,6 @@ class LightConeGenerator(DataGenerator):
     def _lc_data(self, x, y, rseed2):
         if(len(self.data_shape) == 2):
             # for U-Net on slices
-            #rseed2 = random.randint(0, x.shape[-1]-1)
-            #rseed2 = np.argmin(abs(np.mean(y, axis=(0,1)) - self.random_xHI))
-            #rseed2 = np.argmin(abs(self.redshift - self.random_z))
-
             dT_sampled = x[:, :, rseed2].astype(np.float32)
             xH_sampled = y[:, :, rseed2].astype(np.float32)
         elif(len(self.data_shape) == 3):
@@ -154,6 +238,12 @@ class LightConeGenerator(DataGenerator):
         else:
             raise ValueError('wrong dimension for data_shape: %d' %len(self.data_shape))
         
+        if(self.data_shape != dT_sampled.shape):
+            ix, iy = np.random.randint(low=self.data_shape[0]//2, high=dT_sampled.shape[0]-self.data_shape[0]//2, size=2)
+
+            dT_sampled = dT_sampled[ix-self.data_shape[0]//2: ix+self.data_shape[0]//2, iy-self.data_shape[0]//2: iy+self.data_shape[0]//2]
+            xH_sampled = xH_sampled[ix-self.data_shape[0]//2: ix+self.data_shape[0]//2, iy-self.data_shape[0]//2: iy+self.data_shape[0]//2]
+            
         #dT_sampled = self._rescaledata(arr=dT_sampled, a=1e-3, b=100.)
         #xH_sampled = self._rescaledata(arr=xH_sampled, a=1e-7, b=1.-1e-7)
         return dT_sampled, xH_sampled
@@ -163,8 +253,8 @@ class LightConeGenerator_SERENEt(DataGenerator):
     """
     Data generator for lightcone data with RecUNet network
     """
-    def __init__(self, path='./', data_temp=None, batch_size=None, zipf=False, data_shape=None, data_type='xH', shuffle=False):
-        super().__init__(path, data_temp, batch_size, zipf, data_shape, shuffle)
+    def __init__(self, path='./', data_temp=None, batch_size=None, data_shape=None, data_type='xH', shuffle=False):
+        super().__init__(path, data_temp, batch_size, data_shape, shuffle)
         self.data_type = data_type
 
     def __getitem__(self, index):
@@ -215,8 +305,8 @@ class LightConeGenerator_FullSERENEt(DataGenerator):
     """
     Data generator fro lightcone data for SERENEt network 
     """
-    def __init__(self, path='./', data_temp=None, batch_size=None, zipf=False, data_shape=None, shuffle=False):
-        super().__init__(path, data_temp, batch_size, zipf, data_shape, shuffle)
+    def __init__(self, path='./', data_temp=None, batch_size=None, data_shape=None, shuffle=False):
+        super().__init__(path, data_temp, batch_size, data_shape, shuffle)
         
     def __getitem__(self, index):
         indexes = self.indexes[index*self.batch_size:(index+1)*self.batch_size]

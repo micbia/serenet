@@ -18,8 +18,9 @@ os.chdir(path)
 
 config_file = glob('*.ini')[0]
 conf = NetworkConfig(config_file)
+#metrics_wanted = ['matthews_coef', 'balanced_accuracy', 'iou']
 metrics_wanted = ['r2score']
-#conf.METRICS
+#metrics_wanted = conf.METRICS
 #metrics_wanted.remove('precision')
 #metrics_wanted.remove('balanced_accuracy')
 
@@ -44,8 +45,7 @@ ax1.semilogy(val_loss, color='cornflowerblue', label='Validation Loss', ls='--')
 ax1.semilogy(loss, color='navy', label='Training Loss') 
 ax1.scatter(idx_best_mode, val_loss[idx_best_mode], marker="x", color="r", label="Best Model: %.3e" %(np.min(val_loss[idx_best_mode])))
 plot_min, plot_max = np.min([loss.min(), val_loss.min()])*0.9, np.min([loss.max(), val_loss.max()])
-ax1.set_xlim(-1, loss.size)
-#ax1.set_ylim(plot_min, plot_max)
+ax1.set_xlim(-1, loss.size), ax1.set_ylim(0.05, 5)
 
 ax3 = ax1.twinx() 
 ax3.semilogy(lr, color='k', alpha=0.4, label='Learning Rate') 
@@ -54,7 +54,7 @@ lns, labs   = ax1.get_legend_handles_labels()
 lns2, labs2 = ax3.get_legend_handles_labels() 
 ax1.legend(lns+lns2, labs+labs2, loc=1) 
 
-colours = ['blue', 'orange', 'green', 'red']
+colours = ['blue', 'orange', 'green', 'red', 'cyan']
 i_cl = 0
 
 ax2 = plt.subplot(1,2,2) 
@@ -64,13 +64,14 @@ for i_nm, (nm, vnm) in enumerate(zip(name_metric, name_val_metric)):
         metric, val_metric = np.loadtxt(nm), np.loadtxt(vnm)
         print(' %s :\t%.2f%%' %(metrics_wanted[i_nm], 100*val_metric[idx_best_mode]))
         ax2.plot(val_metric, color='tab:'+colours[i_cl], ls='--')
+        #ax2.plot(val_metric, ls='--')
         ax2.plot(metric, color='dark'+colours[i_cl], label=metrics_wanted[i_nm])
+        #ax2.plot(metric, label=metrics_wanted[i_nm])
         ax2.scatter(idx_best_mode, val_metric[idx_best_mode], marker="x", color="r")
         
         i_cl += 1
 
-ax2.set_xlim(-1,loss.size)#, ax2.set_ylim(0.6, 0.9)
-#ax2.set_ylim(0.8, 0.95)
+ax2.set_xlim(-1,loss.size), ax2.set_ylim(0., 0.95)
 ax4 = ax2.twinx() 
 ax4.semilogy(lr, color='k', alpha=0.4, label='Learning Rate') 
 ax4.set_ylabel('Learning Rate') 
@@ -79,12 +80,12 @@ ax4.set_ylabel('Learning Rate')
 #ax2.legend(lns+lns2, labs+labs2, loc='best') 
 ax2.legend(loc='best')
 
-ax1.xaxis.set_minor_locator(ticker.MultipleLocator(10))
-ax1.xaxis.set_major_locator(ticker.MultipleLocator(50))
-ax2.xaxis.set_minor_locator(ticker.MultipleLocator(10))
-ax2.xaxis.set_major_locator(ticker.MultipleLocator(50))
-ax2.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
-ax2.yaxis.set_minor_locator(ticker.MultipleLocator(0.05))
+#ax1.xaxis.set_minor_locator(ticker.MultipleLocator(10))
+#ax1.xaxis.set_major_locator(ticker.MultipleLocator(50))
+#ax2.xaxis.set_minor_locator(ticker.MultipleLocator(10))
+#ax2.xaxis.set_major_locator(ticker.MultipleLocator(50))
+#ax2.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
+#ax2.yaxis.set_minor_locator(ticker.MultipleLocator(0.05))
 
 ax1.tick_params(axis='both', length=7, width=1.1)
 ax1.tick_params(which='minor', axis='both', length=3, width=1.1)

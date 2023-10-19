@@ -8,10 +8,10 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import ELU, LeakyReLU, PReLU, ReLU
 
 from config.net_config import NetworkConfig
-from utils_network.networks import Unet, SERENEt, FullSERENEt
+from utils_network.networks import Unet, SERENEt, FullSERENEt, Auto1D
 from utils_network.metrics import get_avail_metris
 from utils_network.callbacks import HistoryCheckpoint, SaveModelCheckpoint, ReduceLR
-from utils_network.data_generator import LightConeGenerator, LightConeGenerator_SERENEt, LightConeGenerator_FullSERENEt
+from utils_network.data_generator import OneLightConeGenerator, LightConeGenerator, LightConeGenerator_SERENEt, LightConeGenerator_FullSERENEt
 from utils.other_utils import get_data, get_data_lc, config_paths
 from utils_plot.plotting import plot_loss
 
@@ -41,11 +41,10 @@ if isinstance(conf.DATASET_PATH, list):
 else:
     PATH_TRAIN = conf.IO_PATH+'inputs/'+conf.dataset_path
     PATH_VALID = PATH_TRAIN
-ZIPFILE = (0 < len(glob(PATH_TRAIN+'data/*tar.gz')) and 0 < len(glob(PATH_VALID+'data/*tar.gz')))
 # TODO: if you want to restart from the previous best model set conf.RESUME_EPOCH = conf.BEST_EPOCH and loss need to be cut accordingly
 # -------------------------------------------------------------------
 random.seed(RANDOM_SEED)
-PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix='')
+PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix=conf.AUGMENT)
 
 # copy config file to output path
 os.system('cp %s %s' %(config_file, PATH_OUT))
@@ -58,12 +57,10 @@ BATCH_SIZE *= NR_GPUS
 
 # Load data
 #size_train_dataset, size_valid_dataset = 10000*552, 1500*552
-size_train_dataset, size_valid_dataset = 10000, 1500
+size_train_dataset, size_valid_dataset = 3200, 640 #10000, 1500
 
 train_idx = np.arange(0, size_train_dataset, dtype=int)
 valid_idx = np.arange(0, size_valid_dataset, dtype=int)
-#train_idx = np.loadtxt(PATH_TRAIN+'good_data.txt')
-#valid_idx = np.loadtxt(PATH_VALID+'good_data.txt')
 
 # Create data generator from tensorflow.keras.utils.Sequence
 if(TYPE_NET == 'full_serenet'):
@@ -112,12 +109,16 @@ elif(TYPE_NET == 'serenet'):
     valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=({'Image1': tf.float32, 'Image2': tf.float32}, {'out_img': tf.float32}))
 elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet'):
     if(TYPE_NET == 'segunet'):
-        DATA_TYPE = 'xH'
+        TARGET_TYPE = 'xH'
     elif(TYPE_NET == 'recunet'):
-        DATA_TYPE = 'dT2'
+        TARGET_TYPE = 'dT2'
     
-    train_generator = LightConeGenerator(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, zipf=ZIPFILE, batch_size=BATCH_SIZE, data_type=['dT4pca4', DATA_TYPE], shuffle=True)
-    valid_generator = LightConeGenerator(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, zipf=ZIPFILE, batch_size=BATCH_SIZE, data_type=['dT4pca4', DATA_TYPE], shuffle=True)
+    INPUT_TYPE = 'dT4gauss' #'dT3' #'dT5poly4'
+    train_generator = OneLightConeGenerator(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
+    valid_generator = OneLightConeGenerator(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
+
+    #train_generator = LightConeGenerator(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
+    #valid_generator = LightConeGenerator(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
 
     # Define generator functional
     def generator_train():
@@ -137,6 +138,8 @@ elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet'):
     # Create dataset from data generator
     train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=(tf.float32, tf.float32), output_shapes=(tf.TensorShape([None]*(len(conf.IM_SHAPE)+2)), tf.TensorShape([None]*(len(conf.IM_SHAPE)+2))))
     valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=(tf.float32, tf.float32), output_shapes=(tf.TensorShape([None]*(len(conf.IM_SHAPE)+2)), tf.TensorShape([None]*(len(conf.IM_SHAPE)+2))))
+elif(TYPE_NET == 'auto'):
+    pass
 
 # Distribute the dataset to the devices
 train_dist_dataset = strategy.experimental_distribute_dataset(train_dataset)

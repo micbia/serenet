@@ -2,7 +2,7 @@ import numpy as np
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Flatten, BatchNormalization, Activation, Dropout, concatenate, Multiply
-from tensorflow.keras.layers import Dense, Conv2D, Conv2DTranspose, Conv3D, Conv3DTranspose, TimeDistributed
+from tensorflow.keras.layers import Dense, Conv1D, Conv1DTranspose, Conv2D, Conv2DTranspose, Conv3D, Conv3DTranspose, TimeDistributed
 from tensorflow.keras.layers import ConvLSTM2D #, ConvLSTM3D only from tf v2.6.0
 from tensorflow.keras.layers import MaxPooling2D, MaxPooling3D, AveragePooling2D, AveragePooling3D
 from tensorflow.keras.utils import plot_model
@@ -452,3 +452,33 @@ def LSTM_Unet(img_shape, params, path='./'):
 
     #plot_model(model, to_file=path+'LSTMUNet_visualisation.png', show_shapes=True, show_layer_names=True)
     return model
+
+
+def Auto1D(input_size, params, path='./'):
+    # Input layer
+    input_layer = Input(shape=(input_size, 1))
+
+    levels_sizes = [32, 64, 64, 32]
+
+    # Encoder
+    encoded = input_layer
+    for i, channels in enumerate(levels_sizes):
+        encoded = Conv1D(filters=channels, kernel_size=params['kernel_size'], padding='same')(encoded)
+        encoded = BatchNormalization()(encoded)
+        encoded = Activation(params['activation'])(encoded)
+
+    # Decoder
+    decoded = encoded
+    for i, channels in enumerate(levels_sizes[::-1]):
+        decoded = Conv1DTranspose(filters=channels, kernel_size=params['kernel_size'], padding='same')(decoded)
+        decoded = BatchNormalization()(decoded)
+        decoded = Activation(params['activation'])(decoded)
+
+    # Output layer
+    decoded = Conv1D(filters=1, kernel_size=params['kernel_size'], padding='same')(decoded)
+
+    # Autoencoder model
+    autoencoder = Model(inputs=input_layer, outputs=decoded)
+
+    plot_model(autoencoder, to_file=path+'Auto1D_visualisation.png', show_shapes=True, show_layer_names=True)
+    return autoencoder

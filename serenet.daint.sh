@@ -23,12 +23,11 @@ module load TensorFlow/2.4.0-CrayGNU-21.09
 source /project/c31/codes/miniconda3/etc/profile.d/conda.sh
 conda activate segunet-env
 
-#CONFIG_PATH="$HOME/codes/serenet/config"
-#CONFIG_PATH="$SCRATCH/output_serenet/27-04T22-13-45_128slice"
-CONFIG_PATH="$SCRATCH/output_serenet/01-05T17-59-07_128slice"
+CONFIG_PATH="$HOME/codes/serenet/config"
+#CONFIG_PATH="$SCRATCH/output_serenet/recunet18-10T15-58-57_128cube"
 
-#python serenet.py $CONFIG_PATH/net_SegUnet_lc.ini
+python serenet.py $CONFIG_PATH/net_SegUnet_lc.ini
 #python serenet.py $CONFIG_PATH/net_RecUnet_lc.ini
-python serenet.py $CONFIG_PATH/net_SERENEt_lc.ini
+#python serenet.py $CONFIG_PATH/net_SERENEt_lc.ini
 #python pred_segUNet.py
 conda deactivate
