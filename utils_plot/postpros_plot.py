@@ -1,6 +1,7 @@
 import numpy as np, matplotlib.pyplot as plt, os
 import matplotlib.ticker as ticker
 from glob import glob
+from matplotlib import colors, cm
 
 import sys
 sys.path.insert(0,'../')
@@ -54,7 +55,10 @@ lns, labs   = ax1.get_legend_handles_labels()
 lns2, labs2 = ax3.get_legend_handles_labels() 
 ax1.legend(lns+lns2, labs+labs2, loc=1) 
 
-colours = ['blue', 'orange', 'green', 'red', 'cyan']
+norm = colors.Normalize(vmin=0, vmax=len(conf.METRICS), clip=True)
+mapper = cm.ScalarMappable(norm=norm, cmap='tab20c')
+colours = np.array([(mapper.to_rgba(v)) for v in range(len(conf.METRICS))])
+
 i_cl = 0
 
 ax2 = plt.subplot(1,2,2) 
@@ -63,9 +67,9 @@ for i_nm, (nm, vnm) in enumerate(zip(name_metric, name_val_metric)):
     if not('loss' in nm):
         metric, val_metric = np.loadtxt(nm), np.loadtxt(vnm)
         print(' %s :\t%.2f%%' %(metrics_wanted[i_nm], 100*val_metric[idx_best_mode]))
-        ax2.plot(val_metric, color='tab:'+colours[i_cl], ls='--')
+        ax2.plot(val_metric, color=colours[i_cl], ls='--')
         #ax2.plot(val_metric, ls='--')
-        ax2.plot(metric, color='dark'+colours[i_cl], label=metrics_wanted[i_nm])
+        ax2.plot(metric, color=colours[i_cl], label=metrics_wanted[i_nm])
         #ax2.plot(metric, label=metrics_wanted[i_nm])
         ax2.scatter(idx_best_mode, val_metric[idx_best_mode], marker="x", color="r")
         

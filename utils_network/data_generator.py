@@ -54,7 +54,7 @@ class DataGenerator(Sequence):
         return scaled_arr.astype(np.float32)
 
     # TODO: implement tta with rotation and horzontal/vertical flip
-    def _rotate_data(self, data, rotate_angle, rot_axis):
+    def _augment_data(self, data, rotate_angle, rot_axis, flip):
         if(len(self.data_shape) == 3):
             if rot_axis == 1:
                 ax_tup = (1, 2)
@@ -68,6 +68,7 @@ class DataGenerator(Sequence):
         elif(len(self.data_shape) == 2):
             rotated_data = np.rot90(data, k=rotate_angle)
         
+        flipped_data = np.flip(rotated_data, axis=flip)
         return rotated_data
 
 # -------------------------------------------------------------------
@@ -77,9 +78,10 @@ class OneLightConeGenerator(DataGenerator):
     Data generator of lightcone data meant for SegU-Net or RecU-Net with one input and one output.
     Change the data_type variable for selecting the target.
     """
-    def __init__(self, path='./', data_temp=None, batch_size=None, data_shape=None, data_type=['dT4pca4', 'xH'], shuffle=False):
+    def __init__(self, path='./', data_temp=None, batch_size=None, data_shape=None, data_type=['dT4pca4', 'xH'], shuffle=False, tta=False):
         super().__init__(path, data_temp, batch_size, data_shape, shuffle)
         self.data_type = data_type
+        self.tta = tta
         self.nr_sample = len(glob(self.path+'data/'+self.data_type[0]+'*'))
         
     def __getitem__(self, index):
@@ -124,9 +126,11 @@ class OneLightConeGenerator(DataGenerator):
             dT_sampled = dT_sampled[ix-self.data_shape[0]//2: ix+self.data_shape[0]//2, iy-self.data_shape[0]//2: iy+self.data_shape[0]//2]
             xH_sampled = xH_sampled[ix-self.data_shape[0]//2: ix+self.data_shape[0]//2, iy-self.data_shape[0]//2: iy+self.data_shape[0]//2]
 
-        #rseed_rot = np.random.randint(0, 3)
-        #dT_sampled = self._rotate_data(data=dT_sampled, rotate_angle=rseed_rot, rot_axis=None)
-        #xH_sampled = self._rotate_data(data=xH_sampled, rotate_angle=rseed_rot, rot_axis=None)
+        if(self.tta):
+            rseed_rot = np.random.randint(0, 3)
+            rseed_flip = np.random.choice([0, 1, (0,1)])
+            dT_sampled = self._augment_data(data=dT_sampled, rotate_angle=rseed_rot, rot_axis=3, flip=rseed_flip)
+            xH_sampled = self._augment_data(data=xH_sampled, rotate_angle=rseed_rot, rot_axis=3, flip=rseed_flip)
         
         #dT_sampled = self._rescaledata(arr=dT_sampled, a=1e-3, b=100.)
         #xH_sampled = self._rescaledata(arr=xH_sampled, a=1e-7, b=1.-1e-7)
@@ -186,8 +190,8 @@ class Auto1DGenerator(DataGenerator):
             xH_sampled = xH_sampled[ix-self.data_shape[0]//2: ix+self.data_shape[0]//2, iy-self.data_shape[0]//2: iy+self.data_shape[0]//2]
 
         #rseed_rot = np.random.randint(0, 3)
-        #dT_sampled = self._rotate_data(data=dT_sampled, rotate_angle=rseed_rot, rot_axis=None)
-        #xH_sampled = self._rotate_data(data=xH_sampled, rotate_angle=rseed_rot, rot_axis=None)
+        #dT_sampled = self._augment_data(data=dT_sampled, rotate_angle=rseed_rot, rot_axis=None)
+        #xH_sampled = self._augment_data(data=xH_sampled, rotate_angle=rseed_rot, rot_axis=None)
         
         #dT_sampled = self._rescaledata(arr=dT_sampled, a=1e-3, b=100.)
         #xH_sampled = self._rescaledata(arr=xH_sampled, a=1e-7, b=1.-1e-7)

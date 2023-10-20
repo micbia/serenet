@@ -154,7 +154,7 @@ valid_dataset.with_options(options)
 # Define model or load model
 with strategy.scope():
     if(os.path.exists(RESUME_MODEL)):
-        print('Loaded existing model:\n %s' %RESUME_MODEL)
+        print('Loaded existing model:\n %s\n' %RESUME_MODEL)
         ''' NOTE: load_model() is a compiled model ready to be used (unless the saved model was not compiled).
             Therefore re-compiling the model will reset the state of the loaded model. '''
         try:
@@ -167,6 +167,7 @@ with strategy.scope():
             for l in model.layers:
                 l.trainable = False
         
+        print('Resuming from Epoch %d...' %(conf.RESUME_EPOCH))
         if(conf.RECOMPILE):
             #RESUME_LR = np.loadtxt('%soutputs/lr_ep-%d.txt' %(conf.RESUME_PATH, conf.RESUME_EPOCH))[conf.BEST_EPOCH-1]
             RESUME_LR = conf.LR
@@ -181,12 +182,12 @@ with strategy.scope():
             RESUME_LR = np.loadtxt('%soutputs/lr_ep-%d.txt' %(conf.RESUME_PATH, conf.RESUME_EPOCH))[conf.RESUME_EPOCH-1]
             #tf.keras.backend.set_value(model.optimizer.lr, RESUME_LR)       # resume learning rate (this works on .h5 saved model but not .tf)
             RESUME_LOSS = np.loadtxt('%soutputs/val_loss_ep-%d.txt' %(conf.RESUME_PATH, conf.RESUME_EPOCH))[conf.BEST_EPOCH-1]
-            print('\n Loss of resumed model: %.3e\t(%s)' %(RESUME_LOSS, conf.LOSS))
+            print(' Loss of resumed model: %.3e\t(%s)' %(RESUME_LOSS, conf.LOSS))
             model.compile(optimizer=Adam(lr=RESUME_LR), loss=LOSS, metrics=METRICS)
 
-        print(' Resume Learning rate: %.3e' %(tf.keras.backend.get_value(model.optimizer.lr)))
+        print(' Resume Learning rate: %.3e\n' %(tf.keras.backend.get_value(model.optimizer.lr)))
     else: 
-        print('\nModel on %d GPU\n' %NR_GPUS)
+        print('Model on %d GPU\n' %NR_GPUS)
         RESUME_LOSS = None
         hyperpar = {'coarse_dim': conf.COARSE_DIM,
                     'dropout': conf.DROPOUT,
