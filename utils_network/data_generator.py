@@ -136,67 +136,6 @@ class OneLightConeGenerator(DataGenerator):
         #xH_sampled = self._rescaledata(arr=xH_sampled, a=1e-7, b=1.-1e-7)
         return dT_sampled, xH_sampled
 
-class Auto1DGenerator(DataGenerator):
-    """
-    Michele, 21 Sep 2021:
-    Data generator of lightcone data meant for SegU-Net or RecU-Net with one input and one output.
-    Change the data_type variable for selecting the target.
-    """
-    def __init__(self, path='./', data_temp=None, batch_size=None, data_shape=None, data_type=['dT4pca4', 'xH'], shuffle=False):
-        super().__init__(path, data_temp, batch_size, data_shape, shuffle)
-        self.data_type = data_type
-        self.nr_sample = len(glob(self.path+'data/'+self.data_type[0]+'*'))
-        
-    def __getitem__(self, index):
-        indexes = self.indexes[index*self.batch_size:(index+1)*self.batch_size]
-        
-        X = np.zeros((np.append(self.batch_size, self.data_shape)))
-        y = np.zeros((np.append(self.batch_size, self.data_shape)))
-        
-        idx = 0
-        dT = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[0], idx), dimensions=3)
-        xH = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[1], idx), dimensions=3)
-
-        for i, idx in enumerate(indexes):
-            # apply manipolation on the LC data
-            rseed_freq = np.random.randint(xH.shape[2])
-            X[i], y[i] = self._lc_data(x=dT, y=xH, rseed2=rseed_freq)
-            
-        # add channel dimension
-        X = X[..., np.newaxis]
-        y = y[..., np.newaxis]
-
-        return X, y
-
-    def _lc_data(self, x, y, rseed2):
-        if(len(self.data_shape) == 2):
-            # for U-Net on slices
-            dT_sampled = x[:, :, rseed2].astype(np.float32)
-            xH_sampled = y[:, :, rseed2].astype(np.float32)
-        elif(len(self.data_shape) == 3):
-            # for 3D U-Net on frequency cube
-            freq_size = self.data_shape[2]
-            rseed2 = random.randint(freq_size, x.shape[-1]-(freq_size+1)) 
-
-            dT_sampled = x[:, :, rseed2-freq_size//2 : rseed2+freq_size//2]
-            xH_sampled = y[:, :, rseed2-freq_size//2 : rseed2+freq_size//2]
-        else:
-            raise ValueError('wrong dimension for data_shape: %d' %len(self.data_shape))
-         
-        if(self.data_shape != dT_sampled.shape):
-            ix, iy = np.random.randint(low=self.data_shape[0]//2, high=dT_sampled.shape[0]-self.data_shape[0]//2, size=2)
-
-            dT_sampled = dT_sampled[ix-self.data_shape[0]//2: ix+self.data_shape[0]//2, iy-self.data_shape[0]//2: iy+self.data_shape[0]//2]
-            xH_sampled = xH_sampled[ix-self.data_shape[0]//2: ix+self.data_shape[0]//2, iy-self.data_shape[0]//2: iy+self.data_shape[0]//2]
-
-        #rseed_rot = np.random.randint(0, 3)
-        #dT_sampled = self._augment_data(data=dT_sampled, rotate_angle=rseed_rot, rot_axis=None)
-        #xH_sampled = self._augment_data(data=xH_sampled, rotate_angle=rseed_rot, rot_axis=None)
-        
-        #dT_sampled = self._rescaledata(arr=dT_sampled, a=1e-3, b=100.)
-        #xH_sampled = self._rescaledata(arr=xH_sampled, a=1e-7, b=1.-1e-7)
-        return dT_sampled, xH_sampled
-
 class LightConeGenerator(DataGenerator):
     """
     Michele, 21 Sep 2021:
