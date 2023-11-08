@@ -19,13 +19,12 @@ print(title_a+'\n'+title_b)
 #PLOT_STATS, PLOT_MEAN, PLOT_VISUAL, PLOT_ERROR, PLOT_SCORE = True, True, True, True, True
 PLOT_STATS, PLOT_MEAN, PLOT_VISUAL, PLOT_ERROR, PLOT_SCORE = False, False, True, False, False
 
-#path_pred = '/store/ska/sk09/serenet/inputs/dataLC_128_pred_190922/'
-path_pred = '/store/ska/sk09/serenet/inputs/dataLC_128_valid_190922/'
-path_model = '/store/ska/sk09/serenet/outputs_segunet/all24-09T23-36-45_128slice/'
-path_out = '/scratch/snx3000/mibianco/output_serenet/prediction_SERENEt_valid/'
+path_pred = '/store/ska/sk014/mibianco/dataLC_128_pred_190922/'
+path_model = '/store/ska/sk014/serenet/outputs_segunet/all24-09T23-36-45_128slice/'
+path_out = '/scratch/snx3000/mibianco/output_serenet/prediction/'
 config_file = path_model+'net_Unet_lc.ini'
 
-pred_idx = np.arange(0, 1500)
+pred_idx = np.arange(0, 300)
 
 try:
     os.makedirs(path_out)
@@ -54,8 +53,6 @@ for ii in tqdm(range(pred_idx.size)):
     idx, zeta, Rmfp, Tvir, rseed = astro_params[i_pred]
     a_params = {'HII_EFF_FACTOR':zeta, 'R_BUBBLE_MAX':Rmfp, 'ION_Tvir_MIN':Tvir}
 
-    if(os.path.exists('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred))):
-        continue
 
     x_input = read_cbin('%sdata/dT4pca%d_21cm_i%d.bin' %(path_pred, nr, i_pred))
     y_true = read_cbin('%sdata/xH_21cm_i%d.bin' %(path_pred, i_pred))
@@ -63,7 +60,10 @@ for ii in tqdm(range(pred_idx.size)):
     mean_xHI = np.mean(xHI, axis=(0,1))
 
     # Prediction on dataset
-    y_tta = SegUnet2Predict(unet=model, lc=x_input, tta=PLOT_ERROR)
+    if not (os.path.exists('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred))):
+        y_tta = SegUnet2Predict(unet=model, lc=x_input, tta=PLOT_ERROR)
+    else:
+        y_tta = read_cbin('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred))
 
     if(PLOT_ERROR):
         y_pred = np.round(np.mean(np.clip(y_tta, 0, 1), axis=0))
@@ -99,11 +99,11 @@ for ii in tqdm(range(pred_idx.size)):
     FN = np.sum((1-y_pred) * y_true, axis=(0,1))
     #TN, FP, FN, TP = confusion_matrix(y_true[..., 0], y_pred[..., 0]).ravel()
 
-    FNR = FN/(FN+TP)
-    FPR = FP/(FP+TN)
-    TNR = TN/(FP+TN)   # a.k.a specificy
-    TPR = TP/(TP+FP)   # a.k.a precision
-    acc = (TP+TN)/(TP+TN+FP+FN)
+    TNR = TN/(TN+FP + tf.keras.backend.epsilon())   # a.k.a specificy
+    TPR = TP/(TP+FN + tf.keras.backend.epsilon())   # a.k.a precision
+    FNR = 1 - TPR # FN/(FN+TP)
+    FPR = 1 - TNR # FP/(FP+TN)
+    acc = (TP+TN)/(TP+TN+FP+FN + tf.keras.backend.epsilon())
     #rec = TP/(TP+FN)    # very similar to precision
     iou = TP/(TP+FP+FN)
     mcc = (TP*TN - FP*FN) / (np.sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN)) + tf.keras.backend.epsilon())

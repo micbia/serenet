@@ -1,6 +1,6 @@
 #!/bin/bash -l
 #SBATCH --job-name=segunet
-#SBATCH --account=sk09
+#SBATCH --account=sk014
 #SBATCH --nodes=1
 ##SBATCH --ntasks-per-node=1
 #SBATCH --constraint=gpu
@@ -20,7 +20,8 @@ module load TensorFlow/2.4.0-CrayGNU-21.09
 
 CONFIG_PATH="$SCRATCH/output_segunet/outputs/all24-09T23-36-45_128slice"
 
-source $HOME/venvs/segunet-venv/bin/activate
-python utils_plot/postpros_plot.py "$CONFIG_PATH/outputs"
-python pred_segUNet.py $CONFIG_PATH/net2D_lc_full.ini
-deactivate
+source /project/c31/codes/miniconda3/etc/profile.d/conda.sh
+conda activate segunet-env
+#python utils_plot/postpros_plot.py "$CONFIG_PATH/outputs"
+python pred_segUNet.py #$CONFIG_PATH/net2D_lc_full.ini
+conda deactivate
