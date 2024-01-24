@@ -154,8 +154,10 @@ class LightConeGenerator(DataGenerator):
         y = np.zeros((np.append(self.batch_size, self.data_shape)))
         for i, idx in enumerate(indexes):
             
-            dT = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[0], idx%self.nr_sample), dimensions=3)
-            xH = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[1], idx%self.nr_sample), dimensions=3)
+            #dT = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[0], idx%self.nr_sample), dimensions=3)
+            #xH = self._read_cbin(filename='%s%s_21cm_i%d_ch600-751.bin' %(self.path+'data/', self.data_type[1], idx%self.nr_sample), dimensions=3)
+            dT = self._read_cbin(filename='%s%s_21cm_i%d.bin' %(self.path+'data/', self.data_type[0], idx%self.nr_sample), dimensions=3)
+            xH = self._read_cbin(filename='%s%s_21cm_i%d.bin' %(self.path+'data/', self.data_type[1], idx%self.nr_sample), dimensions=3)
 
             # apply manipolation on the LC data
             X[i], y[i] = self._lc_data(x=dT, y=xH, rseed2=idx%dT.shape[-1])

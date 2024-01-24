@@ -34,7 +34,7 @@ if(isinstance(conf.LOSS, list)):
 else:
     LOSS = get_avail_metris(conf.LOSS)
 OPTIMIZER = Adam(lr=conf.LR)
-ACTIVATION = 'relu'
+ACTIVATION = 'relu' #tf.keras.layers.LeakyReLU(alpha=0.1)
 if isinstance(conf.DATASET_PATH, list):
     PATH_TRAIN = conf.IO_PATH+'inputs/'+conf.DATASET_PATH[0]
     PATH_VALID = conf.IO_PATH+'inputs/'+conf.DATASET_PATH[1]
@@ -44,7 +44,8 @@ else:
 # TODO: if you want to restart from the previous best model set conf.RESUME_EPOCH = conf.BEST_EPOCH and loss need to be cut accordingly
 # -------------------------------------------------------------------
 random.seed(RANDOM_SEED)
-PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix=conf.AUGMENT)
+#PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix=conf.AUGMENT)
+PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix='confusing-result-69_')
 
 # copy config file to output path
 os.system('cp %s %s' %(config_file, PATH_OUT))
@@ -113,12 +114,13 @@ elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet'):
     elif(TYPE_NET == 'recunet'):
         TARGET_TYPE = 'dT2'
     
-    INPUT_TYPE = 'dT4gauss' #'dT3' #'dT5poly4'
-    train_generator = OneLightConeGenerator(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
-    valid_generator = OneLightConeGenerator(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
+    #INPUT_TYPE = 'dT4gauss' #'dT3' #'dT5poly4'
+    #train_generator = OneLightConeGenerator(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
+    #valid_generator = OneLightConeGenerator(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
 
-    #train_generator = LightConeGenerator(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
-    #valid_generator = LightConeGenerator(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
+    INPUT_TYPE = 'dT4pca4'
+    train_generator = LightConeGenerator(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
+    valid_generator = LightConeGenerator(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, data_type=[INPUT_TYPE, TARGET_TYPE], shuffle=True)
 
     # Define generator functional
     def generator_train():

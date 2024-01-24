@@ -16,15 +16,20 @@ title_a = '\t\t _    _ _   _      _   \n\t\t| |  | | \ | |    | |  \n\t\t| |  | 
 title_b = ' _____              _ _      _         ___  __                \n|  __ \            | (_)    | |       |__ \/_ |               \n| |__) | __ ___  __| |_  ___| |_ ___     ) || | ___ _ __ ___  \n|  ___/ `__/ _ \/ _` | |/ __| __/ __|   / / | |/ __| `_ ` _ \ \n| |   | | |  __/ (_| | | (__| |_\__ \  / /_ | | (__| | | | | |\n|_|   |_|  \___|\__,_|_|\___|\__|___/ |____||_|\___|_| |_| |_|\n'
 print(title_a+'\n'+title_b)
 
-#PLOT_STATS, PLOT_MEAN, PLOT_VISUAL, PLOT_ERROR, PLOT_SCORE = True, True, True, True, True
-PLOT_STATS, PLOT_MEAN, PLOT_VISUAL, PLOT_ERROR, PLOT_SCORE = False, False, True, False, False
+PLOT_STATS, PLOT_MEAN, PLOT_VISUAL, PLOT_ERROR, PLOT_SCORE = True, True, True, True, True
+#PLOT_STATS, PLOT_MEAN, PLOT_VISUAL, PLOT_ERROR, PLOT_SCORE = False, False, True, False, False
+#path_model = '/store/ska/sk014/serenet/outputs_segunet/all24-09T23-36-45_128slice/'
+#path_model = '/scratch/snx3000/mibianco/output_segunet/segunet28-11T12-45-06_128slice/'
+#config_file = path_model+'net_Unet_lc.ini'
+#path_model = '/scratch/snx3000/mibianco/output_segunet/stressful-joy-99_29-11T09-24-45_128slice/'
+path_model = '/scratch/snx3000/mibianco/output_segunet/exalted-night-62_02-12T19-22-30_128slice/'
+config_file = path_model+'net_segunet2.ini'
+path_out = path_model+'prediction/'
 
-path_pred = '/store/ska/sk014/mibianco/dataLC_128_pred_190922/'
-path_model = '/store/ska/sk014/serenet/outputs_segunet/all24-09T23-36-45_128slice/'
-path_out = '/scratch/snx3000/mibianco/output_serenet/prediction/'
-config_file = path_model+'net_Unet_lc.ini'
+path_pred = '/store/ska/sk014/serenet/inputs/dataLC_128_pred_190922/'
+#path_out = '/scratch/snx3000/mibianco/output_serenet/prediction/'
 
-pred_idx = np.arange(0, 300)
+pred_idx = np.array([232]) #np.arange(0, 300)
 
 try:
     os.makedirs(path_out)
@@ -53,7 +58,6 @@ for ii in tqdm(range(pred_idx.size)):
     idx, zeta, Rmfp, Tvir, rseed = astro_params[i_pred]
     a_params = {'HII_EFF_FACTOR':zeta, 'R_BUBBLE_MAX':Rmfp, 'ION_Tvir_MIN':Tvir}
 
-
     x_input = read_cbin('%sdata/dT4pca%d_21cm_i%d.bin' %(path_pred, nr, i_pred))
     y_true = read_cbin('%sdata/xH_21cm_i%d.bin' %(path_pred, i_pred))
     xHI = read_cbin('%sdata/xHI_21cm_i%d.bin' %(path_pred, i_pred))
@@ -70,7 +74,7 @@ for ii in tqdm(range(pred_idx.size)):
         y_error = np.std(y_tta, axis=0)
         save_cbin('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred), y_pred)
         save_cbin('%serror_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred), y_error)
-        #np.save('%sdata/ttaxH_21cm_i%d.npy' %(path_out, i_pred), y_tta)
+        np.save('%sttaxH_21cm_i%d.npy' %(path_out, i_pred), y_tta)
         y_tta = np.round(np.clip(y_tta, 0, 1))
 
         TP_tta = np.sum(y_tta * y_true[np.newaxis,...], axis=(1,2))
@@ -88,7 +92,7 @@ for ii in tqdm(range(pred_idx.size)):
     else:
         y_pred = np.round(np.clip(y_tta.squeeze(), 0, 1))
         save_cbin('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred), y_pred)
-    
+
     assert x_input.shape == y_pred.shape
     del y_tta, xHI; gc.collect()
 
