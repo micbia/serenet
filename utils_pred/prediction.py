@@ -8,7 +8,7 @@ sys.path.insert(0,'../')
 from utils_network.metrics import get_avail_metris
 from config.net_config import NetworkConfig
 
-def LoadSegUnetModel(cfile):
+def LoadModel(cfile):
     conf = NetworkConfig(cfile)
     
     path_out = conf.RESUME_PATH
@@ -99,22 +99,46 @@ def IndependentOperation_LC():
     return permut_op
 
 
-def SegUnet2Predict(unet, lc, tta=False):
-    assert lc.shape[0] == lc.shape[1]
-    assert lc.shape[0] != lc.shape[2]
-    x = np.moveaxis(lc, -1, 0)
+def Unet2Predict(unet, lc, tta=False, clip=True):
+    if(np.ndim(lc) == 3):
+        # for SegU-Net or RecU-Net
+        assert lc.shape[0] == lc.shape[1]
+        assert lc.shape[0] != lc.shape[2]
+        x = np.moveaxis(lc, -1, 0)[...,np.newaxis]
+    elif(np.ndim(lc) == 4):
+        # for SERENEt architecture
+        assert lc[0].shape[0] == lc[0].shape[1]
+        assert lc[0].shape[0] != lc[0].shape[2]
+        x = (np.moveaxis(lc[0], -1, 0)[...,np.newaxis], np.moveaxis(lc[1], -1, 0)[...,np.newaxis])
 
     if(tta):
         transf_opts = IndependentOperation_LC()
-        ax_tup = [1, 2] 
-        x_tta = np.zeros((len(transf_opts), lc.shape[0], lc.shape[1], lc.shape[2]))
+        if(np.ndim(lc) == 3):
+            # for SegU-Net or RecU-Net
+            ax_tup = [1, 2] 
+            x_tta = np.zeros((len(transf_opts), lc.shape[0], lc.shape[1], lc.shape[2]))
+        elif(np.ndim(lc) == 4):
+            # for SERENEt architecture
+            ax_tup = [0, 1] 
+            x_tta = np.zeros((len(transf_opts), lc[0].shape[0], lc[0].shape[1], lc[0].shape[2]))
 
         for iopt in tqdm(range(len(transf_opts))):
             opt, rot = transf_opts['opt%d' %iopt]
-            x_pred = unet.predict(np.rot90(opt(x), k=rot, axes=ax_tup)[...,np.newaxis], verbose=0)
-            transform_x = opt(np.rot90(x_pred.squeeze(), k=-rot, axes=ax_tup))
-            x_tta[iopt] = np.moveaxis(transform_x, 0, 2)
+
+            if(np.ndim(lc) == 3):
+                x_pred = unet.predict(np.rot90(opt(x), k=rot, axes=ax_tup), verbose=0)
+                transform_x = opt(np.rot90(x_pred.squeeze(), k=-rot, axes=ax_tup))
+                x_tta[iopt] = np.moveaxis(transform_x, 0, -1)
+            if(np.ndim(lc) == 4):        
+                x = (np.moveaxis(np.rot90(opt(lc[0]), k=rot, axes=ax_tup), -1, 0)[...,np.newaxis], np.moveaxis(np.rot90(opt(lc[1]), k=rot, axes=ax_tup), -1, 0)[...,np.newaxis])
+                x_pred = unet.predict(x, verbose=0)
+                transform_x = opt(np.rot90(np.moveaxis(x_pred.squeeze(), 0, -1), k=-rot, axes=ax_tup))
+                x_tta[iopt] = transform_x
     else:
-        x_tta = unet.predict(x[...,np.newaxis], verbose=0)
+        x_tta = unet.predict(x)
         x_tta = np.moveaxis(x_tta.squeeze(), 0, 2)
-    return np.clip(x_tta, 0, 1)
+
+    if(clip):
+        x_tta = np.clip(x_tta, 0, 1)
+
+    return x_tta

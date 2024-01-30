@@ -10,7 +10,7 @@ import matplotlib.gridspec as gridspec
 from sklearn.metrics import matthews_corrcoef, r2_score
 from sklearn.metrics import confusion_matrix
 
-from utils_pred.prediction import SegUnet2Predict, LoadSegUnetModel
+from utils_pred.prediction import Unet2Predict, LoadModel
 
 
 title_a = '\t\t _    _ _   _      _   \n\t\t| |  | | \ | |    | |  \n\t\t| |  | |  \| | ___| |_ \n\t\t| |  | | . ` |/ _ \ __|\n\t\t| |__| | |\  |  __/ |_ \n\t\t \____/|_| \_|\___|\__|\n'
@@ -51,7 +51,7 @@ with open(path_pred+'parameters/cosm_params.txt', 'r') as file:
 astro_params = np.loadtxt('%sparameters/astro_params.txt' %path_pred)
 
 # Load best model
-model = LoadSegUnetModel(config_file)
+model = LoadModel(config_file)
 nr = 4
 
 # Prediction loop
@@ -78,7 +78,7 @@ for ii in tqdm(range(pred_idx.size)):
     xHI = t2c.read_cbin('%sdata/xHI_21cm_i%d.bin' %(path_pred, i_pred))
 
     # Prediction on dataset
-    y_tta = SegUnet2Predict(unet=model, lc=x_input, tta=PLOT_ERROR)
+    y_tta = Unet2Predict(unet=model, lc=x_input, tta=PLOT_ERROR)
 
     if(PLOT_ERROR):
         y_pred = np.round(np.mean(y_tta, axis=0))

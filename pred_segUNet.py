@@ -9,7 +9,7 @@ import matplotlib.gridspec as gridspec
 from sklearn.metrics import matthews_corrcoef, r2_score
 from sklearn.metrics import confusion_matrix
 
-from utils_pred.prediction import SegUnet2Predict, LoadSegUnetModel
+from utils_pred.prediction import Unet2Predict, LoadModel
 from utils.other_utils import read_cbin, save_cbin
 
 title_a = '\t\t _    _ _   _      _   \n\t\t| |  | | \ | |    | |  \n\t\t| |  | |  \| | ___| |_ \n\t\t| |  | | . ` |/ _ \ __|\n\t\t| |__| | |\  |  __/ |_ \n\t\t \____/|_| \_|\___|\__|\n'
@@ -49,7 +49,7 @@ with open(path_pred+'parameters/cosm_params.txt', 'r') as file:
 astro_params = np.loadtxt('%sparameters/astro_params.txt' %path_pred)
 
 # Load best model
-model = LoadSegUnetModel(config_file)
+model = LoadModel(config_file)
 nr = 4
 
 # Prediction loop
@@ -65,7 +65,7 @@ for ii in tqdm(range(pred_idx.size)):
 
     # Prediction on dataset
     if not (os.path.exists('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred))):
-        y_tta = SegUnet2Predict(unet=model, lc=x_input, tta=PLOT_ERROR)
+        y_tta = Unet2Predict(unet=model, lc=x_input, tta=PLOT_ERROR)
     else:
         y_tta = read_cbin('%spred_dT4pca%d_21cm_i%d.bin' %(path_out, nr, i_pred))
 
