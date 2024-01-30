@@ -1,4 +1,4 @@
-import numpy as np, matplotlib.pyplot as plt, os
+import numpy as np, matplotlib.pyplot as plt, os, sys
 import matplotlib
 import tools21cm as t2c
 import tensorflow as tf
@@ -10,12 +10,14 @@ import matplotlib.gridspec as gridspec
 from sklearn.metrics import confusion_matrix, mean_absolute_error, mean_squared_error, r2_score
 from scipy.stats import pearsonr
 
+from config.net_config import NetworkConfig
 from utils_pred.prediction import Unet2Predict, LoadModel
 
 def inverse_normalized_mean_absolute_error(y_true, y_pred):
     return 1 - np.mean(np.abs(y_true - y_pred)) / np.mean(np.abs(y_true - np.mean(y_true)))
 
-path_model = sys.argv[1]
+config_file = sys.argv[1]
+conf = NetworkConfig(config_file)
 
 title_a = '\t\t _    _ _   _      _   \n\t\t| |  | | \ | |    | |  \n\t\t| |  | |  \| | ___| |_ \n\t\t| |  | | . ` |/ _ \ __|\n\t\t| |__| | |\  |  __/ |_ \n\t\t \____/|_| \_|\___|\__|\n'
 title_b = ' _____              _ _      _         ___  __                \n|  __ \            | (_)    | |       |__ \/_ |               \n| |__) | __ ___  __| |_  ___| |_ ___     ) || | ___ _ __ ___  \n|  ___/ `__/ _ \/ _` | |/ __| __/ __|   / / | |/ __| `_ ` _ \ \n| |   | | |  __/ (_| | | (__| |_\__ \  / /_ | | (__| | | | | |\n|_|   |_|  \___|\__,_|_|\___|\__|___/ |____||_|\___|_| |_| |_|\n'
@@ -26,8 +28,7 @@ PLOT_STATS, PLOT_MEAN, PLOT_VISUAL, PLOT_ERROR, PLOT_SCORE = True, True, True, T
 pred_idx = np.arange(300)
 
 path_pred = '/store/ska/sk09/segunet/inputs/dataLC_128_pred_190922/'
-
-config_file = path_model+'net_Unet_lc.ini'
+path_model = conf.RESUME_PATH
 path_out = path_model+'prediction/'
 try:
     os.makedirs(path_out)
