@@ -18,10 +18,15 @@ module load gcc/9.3.0
 module load cudatoolkit/10.2.89_3.28-2.1__g52c0314
 module load TensorFlow/2.4.0-CrayGNU-21.09
 
-#CONFIG_PATH="$SCRATCH/output_segunet/outputs/all24-09T23-36-45_128slice"
+CONFIG_PATH="$SCRATCH/output_serenet/01-05T17-59-07_128slice_priorTS"
+#CONFIG_PATH="$SCRATCH/output_serenet/24-04T16-32-44_128slice_priorGT"
+#CONFIG_PATH="$SCRATCH/output_serenet/17-05T09-23-54_128slice"
 
 source /project/c31/codes/miniconda3/etc/profile.d/conda.sh
 conda activate segunet-env
+
 #python utils_plot/postpros_plot.py "$CONFIG_PATH/outputs"
-python pred_segUNet.py #$CONFIG_PATH/net2D_lc_full.ini
+#python pred_segUNet.py
+python pred_serenet.py $CONFIG_PATH/net_SERENEt_lc.ini
+
 conda deactivate
