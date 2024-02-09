@@ -15,6 +15,8 @@ def LoadModel(cfile):
     MODEL_EPOCH = conf.BEST_EPOCH
     METRICS = {m:get_avail_metris(m) for m in np.append(conf.LOSS, conf.METRICS)}
     model_loaded = load_model('%smodel-sem21cm_ep%d.tf' %(path_out+'checkpoints/', MODEL_EPOCH), custom_objects=METRICS)
+    #model_loaded = load_model('%smodel-sem21cm_ep%d.h5' %(path_out+'checkpoints/', MODEL_EPOCH), custom_objects=METRICS)
+
     
     print(' Loaded model:\n %smodel-sem21cm_ep%d.tf' %(conf.RESUME_PATH, MODEL_EPOCH))
     return model_loaded
@@ -99,7 +101,7 @@ def IndependentOperation_LC():
     return permut_op
 
 
-def Unet2Predict(unet, lc, tta=False, clip=True):
+def Unet2Predict(unet, lc, tta=False, seg=True):
     if(np.ndim(lc) == 3):
         # for SegU-Net or RecU-Net
         assert lc.shape[0] == lc.shape[1]
@@ -138,7 +140,7 @@ def Unet2Predict(unet, lc, tta=False, clip=True):
         x_tta = unet.predict(x)
         x_tta = np.moveaxis(x_tta.squeeze(), 0, 2)
 
-    if(clip):
-        x_tta = np.clip(x_tta, 0, 1)
+    if(seg):
+        x_tta = np.clip(x_tta, 0, 1).round().astype(int)
 
     return x_tta

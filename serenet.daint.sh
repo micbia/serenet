@@ -1,6 +1,6 @@
 #!/bin/bash -l
 #SBATCH --job-name=serenet
-#SBATCH --account=sk014
+#SBATCH --account=c31
 #SBATCH --nodes=1
 ##SBATCH --ntasks-per-node=1
 #SBATCH --constraint=gpu
@@ -25,7 +25,8 @@ conda activate segunet-env
 
 CONFIG_PATH="$HOME/codes/serenet/config"
 
-python serenet.py $CONFIG_PATH/net_segunet2.ini
+python utils_pred/pred_largeFoV.py
+#python serenet.py $CONFIG_PATH/net_segunet2.ini
 #python serenet.py $CONFIG_PATH/net_RecUnet_lc.ini
 #python serenet.py $CONFIG_PATH/net_SegUnet_lc.ini
 #python serenet.py $CONFIG_PATH/net_SERENEt_lc.ini
