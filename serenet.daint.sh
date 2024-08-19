@@ -21,7 +21,7 @@ module load cudatoolkit/10.2.89_3.28-2.1__g52c0314
 module load TensorFlow/2.4.0-CrayGNU-21.09
 
 source /project/c31/codes/miniconda3/etc/profile.d/conda.sh
-conda activate segunet-env
+conda activate serenet-env
 
 CONFIG_PATH="$HOME/codes/serenet/config"
 

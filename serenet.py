@@ -44,8 +44,8 @@ else:
 # TODO: if you want to restart from the previous best model set conf.RESUME_EPOCH = conf.BEST_EPOCH and loss need to be cut accordingly
 # -------------------------------------------------------------------
 random.seed(RANDOM_SEED)
-#PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix=conf.AUGMENT)
-PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix='confusing-result-69_')
+PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix=conf.AUGMENT)
+#PATH_OUT, RESUME_MODEL = config_paths(conf=conf, path_scratch=conf.SCRATCH_PATH, prefix='confusing-result-69_')
 
 # copy config file to output path
 os.system('cp %s %s' %(config_file, PATH_OUT))

@@ -23,7 +23,7 @@ PLOT_STATS, PLOT_MEAN, PLOT_VISUAL, PLOT_ERROR, PLOT_SCORE = True, True, True, F
 #path_pred = '/store/ska/sk09/segunet/inputs/dataLC_128_pred_310822/'
 #path_pred = '/store/ska/sk09/segunet/inputs/dataLC_128_pred_190922/'
 #path_pred = '/store/ska/sk02/lightcones/EOS16/EOS16_dataset/'
-path_pred = '/store/ska/sk09/segunet/inputs/dataLC_128_train_190922/'
+path_pred = '/store/ska/sk014/segunet/inputs/dataLC_128_train_190922/'
 
 #pred_idx = np.arange(1925, 10000)
 pred_idx = np.arange(1)

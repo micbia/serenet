@@ -1,6 +1,6 @@
 #!/bin/bash -l
 #SBATCH --job-name=pred_segunet
-#SBATCH --account=sk014
+#SBATCH --account=c31
 #SBATCH --nodes=1
 ##SBATCH --ntasks-per-node=1
 #SBATCH --constraint=gpu
@@ -18,8 +18,9 @@ module load gcc/9.3.0
 module load cudatoolkit/10.2.89_3.28-2.1__g52c0314
 module load TensorFlow/2.4.0-CrayGNU-21.09
 
+CONFIG_PATH="/store/ska/sk014/serenet/outputs_recunet/serenet01-05T17-59-07_128slice_priorTS"
 #CONFIG_PATH="$SCRATCH/output_serenet/24-04T16-32-44_128slice_priorGT"
-CONFIG_PATH="$SCRATCH/output_serenet/01-05T17-59-07_128slice_priorTS"
+#CONFIG_PATH="$SCRATCH/output_serenet/01-05T17-59-07_128slice_priorTS"
 #CONFIG_PATH="$SCRATCH/output_serenet/17-05T09-23-54_128slice"
 
 source /project/c31/codes/miniconda3/etc/profile.d/conda.sh
