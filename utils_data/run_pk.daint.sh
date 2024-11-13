@@ -8,10 +8,10 @@
 ##SBATCH --output=logs/pk-%A.%j.out
 ##SBATCH --error=logs/pk-%A.%j.err
 ##SBATCH --array=0-150
-#SBATCH --output=logs/pk.%j.out
-#SBATCH --error=logs/pk.%j.err
+#SBATCH --output=../logs/pk.%j.out
+#SBATCH --error=../logs/pk.%j.err
 
-#SBATCH --time=06:00:00
+#SBATCH --time=24:00:00
 #SBATCH --constraint=gpu
 
 #SBATCH --mail-type=ALL
