@@ -1,9 +1,13 @@
+# Datasets
+utils_network/MNIST/
+
 # Folder
 __pycache__/
 utils/__pycache__/__init__.cpython-39.pyc
 utils_pred/__pycache__/prediction.cpython-39.pyc
 ipynb_checkpoints/
 utils_data/.ipynb_checkpoints/
+utils_network/.ipynb_checkpoints/
 
 # Files
 *.pyc
