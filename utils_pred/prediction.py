@@ -137,7 +137,7 @@ def Unet2Predict(unet, lc, tta=False, seg=True):
                 transform_x = opt(np.rot90(np.moveaxis(x_pred.squeeze(), 0, -1), k=-rot, axes=ax_tup))
                 x_tta[iopt] = transform_x
     else:
-        x_tta = unet.predict(x)
+        x_tta = unet.predict(x, verbose=0)
         x_tta = np.moveaxis(x_tta.squeeze(), 0, 2)
 
     if(seg):
