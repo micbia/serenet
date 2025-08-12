@@ -31,7 +31,8 @@ pred_idx = np.arange(300)
 
 path_pred = '/store/ska/sk014/serenet/inputs/dataLC_128_pred_190922/'
 path_model = conf.RESUME_PATH
-path_out = path_model+'prediction/'
+#path_out = path_model+'prediction/'
+path_out = '/scratch/snx3000/mibianco/output_serenet/'
 try:
     os.makedirs(path_out)
 except:
@@ -51,7 +52,7 @@ astro_params = np.loadtxt('%sparameters/astro_params.txt' %path_pred)
 
 # Load best model
 model = LoadModel(config_file)
-model_segunet = LoadModel('/store/ska/sk014/serenet/outputs_segunet/all24-09T23-36-45_128slice/net_Unet_lc.ini')
+#model_segunet = LoadModel('/store/ska/sk014/serenet/outputs_segunet/all24-09T23-36-45_128slice/net_Unet_lc.ini')
 nr = 4
 
 # Prediction loop
@@ -63,8 +64,8 @@ for ii in tqdm(range(pred_idx.size)):
     # Load input and target
     x_input = read_cbin('%sdata/dT4pca%d_21cm_i%d.bin' %(path_pred, nr, i_pred))
     #x_prior = read_cbin('%sdata/xH_21cm_i%d.bin' %(path_pred, i_pred))
-    #x_prior = read_cbin('/store/ska/sk014/serenet/outputs_segunet/all24-09T23-36-45_128slice/prediction/pred_dT4pca4_21cm_i%d.bin' %i_pred)
-    x_prior = Unet2Predict(unet=model_segunet, lc=x_input, tta=False, seg=False)
+    x_prior = read_cbin('/store/ska/sk014/serenet/outputs_segunet/segunet24-09T23-36-45_128slice_paper2/prediction/pred_dT4pca4_21cm_i%d.bin' %i_pred)
+    #x_prior = Unet2Predict(unet=model_segunet, lc=x_input, tta=False, seg=False)
     x_prior = np.clip(x_prior, 0, 1)
 
     x_input = (x_input, x_prior)

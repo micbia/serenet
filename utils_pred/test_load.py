@@ -1,4 +1,4 @@
-import numpy as np, os
+import numpy as np, os, tensorflow as tf
 from glob import glob
 
 # add SERENEt directory to path
@@ -16,4 +16,3 @@ config_file = glob(path_model+'*.ini')[0]
 print(config_file)
 conf = NetworkConfig(config_file)
 model = LoadModel(config_file)
-
