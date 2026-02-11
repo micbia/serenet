@@ -58,10 +58,13 @@ BATCH_SIZE *= NR_GPUS
 
 # Load data
 #size_train_dataset, size_valid_dataset = 10000*552, 1500*552
-size_train_dataset, size_valid_dataset = 3200, 640 #10000, 1500
+size_train_dataset, size_valid_dataset = 100, 15 #10000, 1500
 
-train_idx = np.arange(0, size_train_dataset, dtype=int)
-valid_idx = np.arange(0, size_valid_dataset, dtype=int)
+#np.random.seed(2025)
+train_idx = np.random.choice(10000, size_train_dataset).astype(int)
+valid_idx = np.random.choice(1500, size_valid_dataset).astype(int)
+#train_idx = np.arange(0, size_train_dataset, dtype=int)
+#valid_idx = np.arange(0, size_valid_dataset, dtype=int)
 
 # Create data generator from tensorflow.keras.utils.Sequence
 if(TYPE_NET == 'full_serenet'):
@@ -84,8 +87,8 @@ if(TYPE_NET == 'full_serenet'):
             yield ({'Image': batch_xs}, {'rec_out_img':batch_ys1, 'seg_out_img':batch_ys2})
 
     # Create dataset from data generator
-    train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=({'Image': tf.float32}, {'rec_out_img': tf.float32, 'seg_out_img': tf.float32}))
-    valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=({'Image': tf.float32}, {'rec_out_img': tf.float32, 'seg_out_img': tf.float32}))
+    train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=({'Image': tf.float32}, {'rec_out_img': tf.float32, 'seg_out_img': tf.float32}), output_shapes=({'Image': (None, *np.append(conf.IM_SHAPE, 1))}, {'seg_out_img': (None, *np.append(conf.IM_SHAPE, 1))}))
+    valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=({'Image': tf.float32}, {'rec_out_img': tf.float32, 'seg_out_img': tf.float32}), output_shapes=({'Image': (None, *np.append(conf.IM_SHAPE, 1))}, {'seg_out_img': (None, *np.append(conf.IM_SHAPE, 1))}))
 elif(TYPE_NET == 'serenet'):
     train_generator = LightConeGenerator_SERENEt(path=PATH_TRAIN, data_temp=train_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, shuffle=True)
     valid_generator = LightConeGenerator_SERENEt(path=PATH_VALID, data_temp=valid_idx, data_shape=conf.IM_SHAPE, batch_size=BATCH_SIZE, shuffle=True)
@@ -106,8 +109,9 @@ elif(TYPE_NET == 'serenet'):
             yield ({'Image1': batch_xs1, 'Image2': batch_xs2}, {'out_img': batch_ys})
             
     # Create dataset from data generator
-    train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=({'Image1': tf.float32, 'Image2': tf.float32}, {'out_img': tf.float32}))
-    valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=({'Image1': tf.float32, 'Image2': tf.float32}, {'out_img': tf.float32}))
+    train_dataset = tf.data.Dataset.from_generator(generator_train, output_types=({'Image1': tf.float32, 'Image2': tf.float32}, {'out_img': tf.float32}), output_shapes=({'Image1': (None, *np.append(conf.IM_SHAPE, 1)), 'Image2': (None, *np.append(conf.IM_SHAPE, 1))}, {'out_img': (None, *np.append(conf.IM_SHAPE, 1))}))
+    valid_dataset = tf.data.Dataset.from_generator(generator_valid, output_types=({'Image1': tf.float32, 'Image2': tf.float32}, {'out_img': tf.float32}), output_shapes=({'Image1': (None, *np.append(conf.IM_SHAPE, 1)), 'Image2': (None, *np.append(conf.IM_SHAPE, 1))}, {'out_img': (None, *np.append(conf.IM_SHAPE, 1))}))
+
 elif(TYPE_NET == 'segunet' or TYPE_NET == 'recunet'):
     if(TYPE_NET == 'segunet'):
         TARGET_TYPE = 'xH'

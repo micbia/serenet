@@ -1,5 +1,4 @@
 import math, random, numpy as np, os, sys
-import pandas as pd
 
 from datetime import datetime
 from glob import glob
@@ -212,10 +211,11 @@ class LightConeGenerator_SERENEt(DataGenerator):
         for i, idx in enumerate(indexes):
             # read LC
             dT3 = self._read_cbin(filename='%sdT4pca4_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
-            xH = self._read_cbin(filename='%sxH_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
+            #xH = self._read_cbin(filename='%sxH_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
             #xH = self._read_cbin(filename='%spred_dT4pca4_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
             dT2 = self._read_cbin(filename='%sdT2_21cm_i%d.bin' %(self.path+'data/', idx), dimensions=3)
-            
+
+            xH = self._read_cbin(filename='%spred_dT4pca4_21cm_i%d.bin' %('/capstor/store/cscs/ska/sk014/serenet/outputs_segunet/segunet24-09T23-36-45_128slice_paper2/prediction_SERENEt/', idx), dimensions=3)
             # apply manipolation on the LC data
             X1[i], X2[i], y[i] = self._lc_data(x1=dT3, x2=xH, y1=dT2)
 

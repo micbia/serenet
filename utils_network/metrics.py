@@ -41,9 +41,9 @@ def get_avail_metris(mname):
     elif(mname == 'focal_loss'):
         metric = focal_loss
     elif(mname == 'mae'):
-        metric = tf.keras.metrics.mean_absolute_error
+        metric = tf.keras.metrics.mae #mean_absolute_error
     elif(mname == 'mse'):
-        metric = tf.keras.metrics.mean_squared_error
+        metric = tf.keras.metrics.mse #mean_squared_error
     elif(mname == 'ssiml'):
         metric = ssiml
     elif(mname == 'maeacc'):

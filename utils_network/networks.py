@@ -121,7 +121,7 @@ def SERENEt(img_shape1, img_shape2, params, path='./'):
         a = BatchNormalization(name='%s_BN1' %layer_name)(a)
         a = Activation(params['activation'], name='%s_A1' %layer_name)(a)
         # second block
-        a = Conv2D(filters=nr_filts, kernel_size=kernel_size, padding='same',
+        a = Conv(filters=nr_filts, kernel_size=kernel_size, padding='same',
                    kernel_initializer="he_normal", name='%s_C2' %layer_name)(a)
         a = BatchNormalization(name='%s_BN2' %layer_name)(a)
         a = Activation(params['activation'], name='%s_A2' %layer_name)(a)

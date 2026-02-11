@@ -19,8 +19,9 @@ os.chdir(path)
 
 config_file = glob('*.ini')[0]
 conf = NetworkConfig(config_file)
-metrics_wanted = ['matthews_coef', 'balanced_accuracy', 'iou']
-#metrics_wanted = ['r2score']
+#metrics_wanted = ['matthews_coef', 'balanced_accuracy', 'iou']
+#metrics_wanted = ['matthews_coef', 'balanced_accuracy', 'iou']
+metrics_wanted = ['r2score']
 #metrics_wanted = conf.METRICS
 #metrics_wanted.remove('precision')
 #metrics_wanted.remove('balanced_accuracy')
@@ -54,7 +55,6 @@ ax3.set_ylabel('Learning Rate')
 lns, labs   = ax1.get_legend_handles_labels() 
 lns2, labs2 = ax3.get_legend_handles_labels() 
 ax1.legend(lns+lns2, labs+labs2, loc=1) 
-
 norm = colors.Normalize(vmin=0, vmax=len(conf.METRICS), clip=True)
 mapper = cm.ScalarMappable(norm=norm, cmap='tab20c')
 colours = np.array([(mapper.to_rgba(v)) for v in range(len(conf.METRICS))])
